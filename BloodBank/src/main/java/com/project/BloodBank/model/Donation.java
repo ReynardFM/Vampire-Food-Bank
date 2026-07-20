@@ -47,6 +47,4 @@ public class Donation {
     public DonationRequest getLinkedRequest() {
         return linkedRequest;
     }
-
-
 }
