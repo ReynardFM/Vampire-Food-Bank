@@ -1,17 +1,37 @@
 package com.project.BloodBank.model;
 
 import com.project.BloodBank.model.enums.BloodGroup;
-import com.project.BloodBank.model.enums.DonationStatus;
 import com.project.BloodBank.model.enums.RequestStatus;
 import com.project.BloodBank.model.enums.UrgencyLevel;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "donation_requests")
+@Table(
+        name = "donation_requests",
+        indexes = {
+                @Index(
+                        name = "idx_request_status",
+                        columnList = "status"
+                ),
+                @Index(
+                        name = "idx_request_date",
+                        columnList = "request_date"
+                ),
+                @Index(
+                        name = "idx_request_bloodgroup",
+                        columnList = "requested_blood_group"
+                )
+        }
+)
 public class DonationRequest {
 
     @Id
@@ -22,13 +42,16 @@ public class DonationRequest {
     @Column(nullable = false)
     private BloodGroup requestedBloodGroup;
 
+    @Min(1)
     @Column(nullable = false)
     private int unitsNeeded;
 
+    @NotBlank
+    @Size(max = 200)
     @Column(nullable = false)
     private String hospitalName;
 
-    @Column
+    @Column()
     private String hospitalAddress;
 
     @Enumerated(EnumType.STRING)
@@ -43,42 +66,44 @@ public class DonationRequest {
     @Column(nullable = false)
     private RequestStatus status;
 
-    @Column(nullable = false)
+    @Column(
+            nullable = false,
+            updatable = false
+    )
     private LocalDateTime requestDate;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @OneToMany(mappedBy = "linkedRequest")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processed_by_id")
+    private User processedBy;
+
+    @Column()
+    private LocalDateTime processedDate;
+
+    @CreationTimestamp
+    @Column(
+            updatable = false
+    )
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    @OneToMany(
+            mappedBy = "linkedRequest",
+            fetch = FetchType.LAZY
+    )
     private List<Donation> donations = new ArrayList<>();
 
     public DonationRequest() {
     }
 
-    public DonationRequest(
-            BloodGroup requestedBloodGroup,
-            int unitsNeeded,
-            String hospitalName,
-            String hospitalAddress,
-            UrgencyLevel urgencyLevel,
-            User requestedBy,
-            String notes
-    ) {
-        this.requestedBloodGroup = requestedBloodGroup;
-        this.unitsNeeded = unitsNeeded;
-        this.hospitalName = hospitalName;
-        this.hospitalAddress = hospitalAddress;
-        this.urgencyLevel = urgencyLevel;
-        this.requestedBy = requestedBy;
-        this.notes = notes;
-        this.status = RequestStatus.PENDING;
-        this.requestDate = LocalDateTime.now();
-    }
-
     @PrePersist
     public void setDefaultValues() {
         if (status == null) {
-            status = DonationStatus.PENDING;
+            status = RequestStatus.PENDING;
         }
 
         if (requestDate == null) {
@@ -87,17 +112,24 @@ public class DonationRequest {
     }
 
     public void addDonation(Donation donation) {
-        donations.add(donation);
-        donation.setLinkedRequest(this);
+        if (donation != null && !donations.contains(donation)) {
+            donations.add(donation);
+            donation.setLinkedRequest(this);
+        }
     }
 
     public void removeDonation(Donation donation) {
-        donations.remove(donation);
-        donation.setLinkedRequest(null);
+        if (donation != null && donations.remove(donation)) {
+            donation.setLinkedRequest(null);
+        }
     }
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public BloodGroup getRequestedBloodGroup() {
@@ -154,6 +186,12 @@ public class DonationRequest {
 
     public void setStatus(RequestStatus status) {
         this.status = status;
+
+        if (processedDate == null
+                && (status == RequestStatus.APPROVED
+                || status == RequestStatus.REJECTED)) {
+            processedDate = LocalDateTime.now();
+        }
     }
 
     public LocalDateTime getRequestDate() {
@@ -172,11 +210,86 @@ public class DonationRequest {
         this.notes = notes;
     }
 
+    public User getProcessedBy() {
+        return processedBy;
+    }
+
+    public void setProcessedBy(User processedBy) {
+        this.processedBy = processedBy;
+    }
+
+    public LocalDateTime getProcessedDate() {
+        return processedDate;
+    }
+
+    public void setProcessedDate(LocalDateTime processedDate) {
+        this.processedDate = processedDate;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public List<Donation> getDonations() {
         return donations;
     }
 
     public void setDonations(List<Donation> donations) {
-        this.donations = donations;
+        this.donations =
+                donations != null ? donations : new ArrayList<>();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
+        if (!(object instanceof DonationRequest other)) {
+            return false;
+        }
+
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "DonationRequest{" +
+                "id=" + id +
+                ", requestedBloodGroup=" + requestedBloodGroup +
+                ", unitsNeeded=" + unitsNeeded +
+                ", hospitalName='" + hospitalName + '\'' +
+                ", hospitalAddress='" + hospitalAddress + '\'' +
+                ", urgencyLevel=" + urgencyLevel +
+                ", requestedBy=" +
+                (requestedBy != null ? "<User reference>" : null) +
+                ", status=" + status +
+                ", requestDate=" + requestDate +
+                ", notes='" + notes + '\'' +
+                ", processedBy=" +
+                (processedBy != null ? "<User reference>" : null) +
+                ", processedDate=" + processedDate +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", donations=" +
+                (donations != null ? "<Donation collection>" : null) +
+                '}';
     }
 }
