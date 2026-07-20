@@ -47,4 +47,32 @@ public class Donation {
     public DonationRequest getLinkedRequest() {
         return linkedRequest;
     }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setDonor(User donor) {
+        this.donor = donor;
+    }
+
+    public void setDonationData(LocalDate donationData) {
+        this.donationData = donationData;
+    }
+
+    public void setUnitsDonated(int unitsDonated) {
+        this.unitsDonated = unitsDonated;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public void setDonationStatus(DonationStatus donationStatus) {
+        this.donationStatus = donationStatus;
+    }
+
+    public void setLinkedRequest(DonationRequest linkedRequest) {
+        this.linkedRequest = linkedRequest;
+    }
 }
