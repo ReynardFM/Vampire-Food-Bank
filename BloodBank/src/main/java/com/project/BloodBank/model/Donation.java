@@ -19,4 +19,32 @@ public class Donation {
     private DonationRequest linkedRequest;
 
     public Donation() {}
+
+    public long getId() {
+        return id;
+    }
+
+    public User getDonor() {
+        return donor;
+    }
+
+    public LocalDate getDonationData() {
+        return donationData;
+    }
+
+    public int getUnitsDonated() {
+        return unitsDonated;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public DonationStatus getDonationStatus() {
+        return donationStatus;
+    }
+
+    public DonationRequest getLinkedRequest() {
+        return linkedRequest;
+    }
 }
