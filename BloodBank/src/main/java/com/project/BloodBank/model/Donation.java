@@ -1,20 +1,12 @@
 package com.project.BloodBank.model;
 
-import com.project.BloodBank.model.enums.DonationStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
-@Table(name="donations",
-        indexes={
-                @Index(name="idx_donation_date", columnList="donation_date"),
-                @Index(name="idx_donation_donor", columnList="donor_id")
-        })
+@Table(name="donations")
 public class Donation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,26 +20,14 @@ public class Donation {
     private LocalDate donationDate;
 
     @Column(nullable=false)
-    @Min(1)
     private int unitsDonated;
 
     @Column
     private String location;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable=false)
-    private DonationStatus status;
-
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="linked_request_id", nullable=true)
     private DonationRequest linkedRequest;
-
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 
     public Donation() {}
 
@@ -72,20 +52,8 @@ public class Donation {
         return location;
     }
 
-    public DonationStatus getStatus() {
-        return status;
-    }
-
     public DonationRequest getLinkedRequest() {
         return linkedRequest;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
     }
 
     // setters
@@ -109,20 +77,8 @@ public class Donation {
         this.location = location;
     }
 
-    public void setStatus(DonationStatus status) {
-        this.status = status;
-    }
-
     public void setLinkedRequest(DonationRequest linkedRequest) {
         this.linkedRequest = linkedRequest;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     @Override
@@ -137,7 +93,7 @@ public class Donation {
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hash(id);
     }
 
     @Override
@@ -147,9 +103,6 @@ public class Donation {
                 ", donationDate=" + donationDate +
                 ", unitsDonated=" + unitsDonated +
                 ", location='" + location + '\'' +
-                ", status=" + status +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
                 '}';
     }
 }
