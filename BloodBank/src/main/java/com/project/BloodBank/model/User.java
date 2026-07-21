@@ -15,10 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "users",
-        indexes = {
-        @Index(name = "idx_user_bloodgroup", columnList = "blood_group"),
-                @Index(name = "idx_user_email", columnList = "email") })
+@Table(name = "users")
 
 public class User implements UserDetails {
 
