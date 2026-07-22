@@ -4,33 +4,14 @@ import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.RequestStatus;
 import com.project.BloodBank.model.enums.UrgencyLevel;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(
-        name = "donation_requests",
-        indexes = {
-                @Index(
-                        name = "idx_request_status",
-                        columnList = "status"
-                ),
-                @Index(
-                        name = "idx_request_date",
-                        columnList = "request_date"
-                ),
-                @Index(
-                        name = "idx_request_bloodgroup",
-                        columnList = "requested_blood_group"
-                )
-        }
+        name = "donation_requests"
 )
 public class DonationRequest {
 
@@ -42,12 +23,9 @@ public class DonationRequest {
     @Column(nullable = false)
     private BloodGroup requestedBloodGroup;
 
-    @Min(1)
     @Column(nullable = false)
     private int unitsNeeded;
 
-    @NotBlank
-    @Size(max = 200)
     @Column(nullable = false)
     private String hospitalName;
 
@@ -59,7 +37,14 @@ public class DonationRequest {
     private UrgencyLevel urgencyLevel;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requested_by_id", nullable = false)
+    @JoinColumn(
+            name = "requested_by_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_donationrequest_requestedby",
+                    foreignKeyDefinition = "FOREIGN KEY (requested_by_id) REFERENCES users(id) ON DELETE RESTRICT"
+            )
+    )
     private User requestedBy;
 
     @Enumerated(EnumType.STRING)
@@ -75,21 +60,6 @@ public class DonationRequest {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "processed_by_id")
-    private User processedBy;
-
-    @Column()
-    private LocalDateTime processedDate;
-
-    @CreationTimestamp
-    @Column(
-            updatable = false
-    )
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 
     @OneToMany(
             mappedBy = "linkedRequest",
@@ -186,12 +156,6 @@ public class DonationRequest {
 
     public void setStatus(RequestStatus status) {
         this.status = status;
-
-        if (processedDate == null
-                && (status == RequestStatus.APPROVED
-                || status == RequestStatus.REJECTED)) {
-            processedDate = LocalDateTime.now();
-        }
     }
 
     public LocalDateTime getRequestDate() {
@@ -208,38 +172,6 @@ public class DonationRequest {
 
     public void setNotes(String notes) {
         this.notes = notes;
-    }
-
-    public User getProcessedBy() {
-        return processedBy;
-    }
-
-    public void setProcessedBy(User processedBy) {
-        this.processedBy = processedBy;
-    }
-
-    public LocalDateTime getProcessedDate() {
-        return processedDate;
-    }
-
-    public void setProcessedDate(LocalDateTime processedDate) {
-        this.processedDate = processedDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public List<Donation> getDonations() {
@@ -266,7 +198,7 @@ public class DonationRequest {
 
     @Override
     public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+        return Objects.hash(id);
     }
 
     @Override
@@ -283,11 +215,6 @@ public class DonationRequest {
                 ", status=" + status +
                 ", requestDate=" + requestDate +
                 ", notes='" + notes + '\'' +
-                ", processedBy=" +
-                (processedBy != null ? "<User reference>" : null) +
-                ", processedDate=" + processedDate +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
                 ", donations=" +
                 (donations != null ? "<Donation collection>" : null) +
                 '}';

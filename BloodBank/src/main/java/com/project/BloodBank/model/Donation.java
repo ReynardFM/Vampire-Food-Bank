@@ -12,8 +12,15 @@ public class Donation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="donor_id", nullable=false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "donor_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_donation_donor",
+                    foreignKeyDefinition = "FOREIGN KEY (donor_id) REFERENCES users(id) ON DELETE RESTRICT"
+            )
+    )
     private User donor;
 
     @Column(nullable=false)
@@ -25,8 +32,15 @@ public class Donation {
     @Column
     private String location;
 
-    @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="linked_request_id", nullable=true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "linked_request_id",
+            nullable = true,
+            foreignKey = @ForeignKey(
+                    name = "fk_donation_linked_request",
+                    foreignKeyDefinition = "FOREIGN KEY (linked_request_id) REFERENCES donation_requests(id) ON DELETE SET NULL"
+            )
+    )
     private DonationRequest linkedRequest;
 
     public Donation() {}
