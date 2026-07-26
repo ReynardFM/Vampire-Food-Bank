@@ -2,6 +2,7 @@ package com.project.BloodBank.repository;
 
 import com.project.BloodBank.model.User;
 import com.project.BloodBank.model.enums.BloodGroup;
+import com.project.BloodBank.model.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByBloodGroupAndActiveTrue(BloodGroup bloodGroup);
     List<User> findAllByActiveTrue();
     Optional<User> findByIdAndActiveTrue(Long id);
+    long countByActiveTrueAndRole(Role role);
 }

@@ -71,11 +71,11 @@ public class User implements UserDetails {
         this.id = id;
     }
 
-    public String getfullName() {
+    public String getFullName() {
         return fullName;
     }
 
-    public void setfullName(String fullName) {
+    public void setFullName(String fullName) {
         this.fullName = fullName;
     }
 
@@ -221,7 +221,7 @@ public class User implements UserDetails {
 
     @Override
     public String toString() {
-        return "UserService{" +
+        return "User{" +
                 "id=" + id +
                 ", fullName='" + fullName + '\'' +
                 ", email='" + email + '\'' +

@@ -4,6 +4,7 @@ import com.project.BloodBank.model.DonationRequest;
 import com.project.BloodBank.model.User;
 import com.project.BloodBank.model.enums.RequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +15,8 @@ public interface DonationRequestRepository extends JpaRepository<DonationRequest
     List<DonationRequest> findByRequestedBy(User user);
     List<DonationRequest> findByRequestedByAndStatus(User user, RequestStatus status);
     Optional<DonationRequest> findByIdAndRequestedBy(Long id, User user);
+    long countByStatus(RequestStatus status);
+
+    @Query("SELECT r.status, COUNT(r) FROM DonationRequest r GROUP BY r.status")
+    List<Object[]> countGroupedByStatus();
 }

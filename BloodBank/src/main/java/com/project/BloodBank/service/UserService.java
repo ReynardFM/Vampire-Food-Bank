@@ -1,5 +1,7 @@
 package com.project.BloodBank.service;
 
+import com.project.BloodBank.dto.UserProfileDto;
+import com.project.BloodBank.dto.UserRegistrationDto;
 import com.project.BloodBank.exception.EmailAlreadyExistsException;
 import com.project.BloodBank.exception.ResourceNotFoundException;
 import com.project.BloodBank.model.User;
@@ -33,7 +35,7 @@ public class UserService {
         }
 
         User user = new User();
-        user.setfullName(dto.getFullName());
+        user.setFullName(dto.getFullName());
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRole(Role.DONOR);
@@ -46,6 +48,7 @@ public class UserService {
     public User updateProfile(Long userId, UserProfileDto dto) {
         User user = getUserById(userId);
 
+        user.setFullName(dto.getFullName());
         user.setPhoneNumber(dto.getPhoneNumber());
         user.setBloodGroup(dto.getBloodGroup());
         user.setDateOfBirth(dto.getDateOfBirth());
