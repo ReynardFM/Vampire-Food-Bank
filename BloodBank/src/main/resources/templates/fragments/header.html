@@ -1,23 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-    <div class="nav_bar">
-    <div class="left_nav"><img src="../images/logo_white.png" alt="logo">
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- ========== HEADER FRAGMENT ========== -->
+<div class="nav_bar" th:fragment="header(user)">
+    <div class="left_nav">
+        <!-- Logo - using Thymeleaf @{} for proper path resolution -->
+        <img th:src="@{/images/logo_white.png}" alt="LifeLine Logo">
         <div class="brand">
             <h2>LifeLine Blood Bank</h2>
             <span>www.lifeline.com</span>
         </div>
     </div>
     <div class="right_nav">
-        <a href="#"><i class="fa-solid fa-arrow-right-to-bracket"></i>Log In</a>
-        <a href="#"><i class="fa-solid fa-file-pen"></i>Register</a>
-        <a href="#"><i class="fa-solid fa-circle-info"></i>About Us</a>
-        <a href="#"><i class="fa-solid fa-chart-pie"></i>Dashboard</a>
+        <!-- Show these links ONLY when user is NOT logged in -->
+        <th:block th:if="${user == null}">
+            <a th:href="@{/login}">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>Log In
+            </a>
+            <a th:href="@{/register}">
+                <i class="fa-solid fa-file-pen"></i>Register
+            </a>
+        </th:block>
+
+        <!-- Show these links when user IS logged in -->
+        <th:block th:if="${user != null}">
+            <a th:href="@{/donor/profile}">
+                <i class="fa-solid fa-user"></i>Profile
+            </a>
+            <a th:href="@{/requests/list}">
+                <i class="fa-solid fa-list"></i>My Requests
+            </a>
+            <a th:href="@{/donor/search}">
+                <i class="fa-solid fa-magnifying-glass"></i>Search
+            </a>
+            <!-- Show admin links only if user is ADMIN -->
+            <a th:if="${user.role.name() == 'ADMIN'}" th:href="@{/admin/pending}">
+                <i class="fa-solid fa-clock"></i>Pending
+            </a>
+            <a th:if="${user.role.name() == 'ADMIN'}" th:href="@{/dashboard}">
+                <i class="fa-solid fa-chart-pie"></i>Dashboard
+            </a>
+            <a th:href="@{/logout}">
+                <i class="fa-solid fa-right-from-bracket"></i>Logout
+            </a>
+        </th:block>
+
+        <!-- About Us is always visible -->
+        <a th:href="@{/about-us}">
+            <i class="fa-solid fa-circle-info"></i>About Us
+        </a>
+
+        <!-- Welcome message (only when logged in) -->
+        <span th:if="${user != null}" class="welcome-text"
+              th:text="'Welcome, ' + ${user.fullName}">
+        </span>
     </div>
 </div>
-</body>
 </html>
