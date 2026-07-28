@@ -1,0 +1,63 @@
+/* ========== HOME PAGE SPECIFIC STYLES ========== */
+/* These styles apply ONLY to the home page */
+
+/* Left panel - Welcome section */
+.home-panel .login_panel {
+    border-radius: 25px 0 0 25px;
+}
+
+.home-panel .login_panel h1 {
+    font-size: 42px;
+    color: #d62929;
+    margin-bottom: 15px;
+}
+
+.home-panel .subtitle {
+    font-size: 18px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+/* Home-specific button styles */
+.btn-home-primary {
+    flex: 1;
+    text-align: center;
+    padding: 16px 30px;
+    border: none;
+    border-radius: 45px;
+    background: #d62929;
+    color: white;
+    font-size: 17px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform .2s, background-color .2s;
+    display: inline-block;
+}
+
+.btn-home-primary:hover {
+    transform: scale(1.05);
+    background: #b61c1c;
+}
+
+.btn-home-secondary {
+    flex: 1;
+    text-align: center;
+    padding: 16px 30px;
+    border: none;
+    border-radius: 45px;
+    background: #e9ecef;
+    color: #333;
+    font-size: 17px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform .2s, background-color .2s;
+    display: inline-block;
+}
+
+.btn-home-secondary:hover {
+    transform: scale(1.05);
+    background: #dee2e6;
+}
+
+/* Home stats cards - already in style.css via .about_cards */

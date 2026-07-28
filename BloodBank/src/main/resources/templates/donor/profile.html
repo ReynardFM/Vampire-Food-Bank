@@ -1,10 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+<!-- ========== HEADER ========== -->
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
+<div class="form_container" style="flex-direction: column; align-items: center; padding-top: 30px;">
+
+    <!-- Flash Messages -->
+    <div th:if="${success}" class="alert alert-success" style="width: 80%;" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" style="width: 80%;" th:text="${error}"></div>
+
+    <div style="display: flex; gap: 30px; width: 80%; flex-wrap: wrap;">
+
+        <!-- Left Side: Profile Info -->
+        <div class="login_panel" style="flex: 1; min-width: 300px; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 24px;"><i class="fa-solid fa-user" style="color: #d62929; margin-right: 10px;"></i>My Profile</h2>
+                <a th:href="@{/donor/profile-edit}" style="color: #d62929; text-decoration: none; font-weight: 600;">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit
+                </a>
+            </div>
+
+            <p style="margin-bottom: 10px;"><strong>Name:</strong> <span th:text="${user.fullName}"></span></p>
+            <p style="margin-bottom: 10px;"><strong>Email:</strong> <span th:text="${user.email}"></span></p>
+            <p style="margin-bottom: 10px;"><strong>Blood Group:</strong>
+                <span th:text="${user.bloodGroup != null ? user.bloodGroup.displayName : 'Not specified'}"></span>
+            </p>
+            <p style="margin-bottom: 10px;"><strong>Phone:</strong>
+                <span th:text="${user.phoneNumber != null ? user.phoneNumber : 'Not specified'}"></span>
+            </p>
+
+            <p style="margin-bottom: 10px;"><strong>Status:</strong>
+                <span th:if="${user.bloodGroup == null}" style="color: #d62929; font-weight: bold;">Profile Incomplete</span>
+                <span th:if="${user.bloodGroup != null}" style="color: #155724; font-weight: bold;">Active Donor</span>
+            </p>
+
+            <!-- Prompt to finish Step 2 of registration -->
+            <div th:if="${user.bloodGroup == null}" style="margin-top: 25px;">
+                <a th:href="@{/donor/complete-profile}" style="display: inline-block; padding: 12px 20px; background: #d62929; color: white; border-radius: 45px; text-decoration: none; font-weight: 600; width: 100%; text-align: center;">
+                    Complete Profile Now
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Side: Donation History -->
+        <div class="login_panel" style="flex: 2; min-width: 400px; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 30px;">
+            <h2 style="margin-bottom: 20px; font-size: 24px;"><i class="fa-solid fa-clock-rotate-left" style="color: #d62929; margin-right: 10px;"></i>Donation History</h2>
+
+            <table style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Outfit', sans-serif;">
+                <thead>
+                <tr style="border-bottom: 2px solid #ddd;">
+                    <th style="padding: 12px 8px; color: #555;">Date</th>
+                    <th style="padding: 12px 8px; color: #555;">Location</th>
+                    <th style="padding: 12px 8px; color: #555;">Units Donated</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Empty State -->
+                <tr th:if="${#lists.isEmpty(donations)}">
+                    <td colspan="3" style="padding: 20px 8px; color: #888; text-align: center; font-style: italic;">
+                        No donation history found.
+                    </td>
+                </tr>
+                <!-- Populated State -->
+                <tr th:each="donation : ${donations}" style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 15px 8px;" th:text="${donation.donationDate}"></td>
+                    <td style="padding: 15px 8px;" th:text="${donation.location}"></td>
+                    <td style="padding: 15px 8px;">
+                                <span style="background: #f8d7da; color: #d62929; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 13px;"
+                                      th:text="${donation.unitsDonated} + ' Units'"></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

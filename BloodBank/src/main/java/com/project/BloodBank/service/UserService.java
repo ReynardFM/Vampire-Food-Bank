@@ -86,4 +86,8 @@ public class UserService {
         user.setActive(false);
         userRepository.save(user);
     }
+
+    public List<User> getAllActiveDonors() {
+        return userRepository.findAllByActiveTrue();
+    }
 }

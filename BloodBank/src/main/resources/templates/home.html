@@ -1,76 +1,80 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LifeLine Blood Bank - Home</title>
-    <!-- Your custom CSS -->
-    <link rel="stylesheet" th:href="@{/css/styles_home.css}" />
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <!-- Google Fonts -->
+    <!-- Shared styles -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- Home-specific styles -->
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<!-- ========== HEADER ========== -->
-<div th:replace="~{fragments/header :: header(user=null)}"></div>
+<div class="main_container home-panel">
 
-<!-- ========== MAIN CONTENT ========== -->
-<div class="form_container">
-    <!-- Left Panel - Welcome Message -->
-    <div class="login_panel" style="border-radius: 25px 0 0 25px;">
-        <h1>Welcome to LifeLine Blood Bank</h1>
-        <p class="subtitle">
-            Saving lives one donation at a time. Register as a donor, request blood when you need it,
-            and help build a healthier community.
-        </p>
+    <!-- ========== HEADER ========== -->
+    <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
-        <div style="display: flex; gap: 15px; margin-top: 30px; flex-wrap: wrap;">
-            <a th:href="@{/register}" style="flex:1; text-align:center; padding:16px; border:none; border-radius:45px; background:#d62929; color:white; font-size:17px; font-weight:700; text-decoration:none; transition:transform .2s, background-color .2s; display:inline-block;">
-                <i class="fa-solid fa-heart"></i> Get Started
-            </a>
-            <a th:href="@{/login}" style="flex:1; text-align:center; padding:16px; border:none; border-radius:45px; background:#e9ecef; color:#333; font-size:17px; font-weight:700; text-decoration:none; transition:transform .2s, background-color .2s; display:inline-block;">
-                <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
-            </a>
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="form_container">
+        <!-- Left Panel: Welcome -->
+        <div class="login_panel" style="border-radius: 25px 0 0 25px;">
+            <h1>Welcome to LifeLine Blood Bank</h1>
+            <p class="subtitle">
+                Saving lives one donation at a time. Register as a donor, request blood when you need it,
+                and help build a healthier community.
+            </p>
+
+            <div style="display: flex; gap: 15px; margin: 30px 0 20px; flex-wrap: wrap;">
+                <a th:href="@{/register}" class="btn-home-primary">
+                    <i class="fa-solid fa-heart"></i> Get Started
+                </a>
+                <a th:href="@{/login}" class="btn-home-secondary">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+                </a>
+            </div>
+
+            <p style="margin-top: 20px; color: #999; font-size: 14px;">
+                <i class="fa-regular fa-calendar"></i>
+                <span th:text="${#dates.format(#dates.createNow(), 'dd MMM yyyy')}"></span>
+            </p>
         </div>
 
-        <p style="margin-top: 30px; color: #999; font-size: 14px;">
-            <i class="fa-regular fa-calendar"></i>
-            <span th:text="${#dates.format(#dates.createNow(), 'dd MMM yyyy')}"></span>
-        </p>
-    </div>
+        <!-- Right Panel: Stats -->
+        <div class="about_panel">
+            <h2>Every Donation Tells a Story.</h2>
+            <p class="quote">
+                "One blood donation has the power to save up to three lives. Your generosity today can become someone's tomorrow."
+            </p>
+            <p>
+                LifeLine Blood Bank is dedicated to connecting generous donors with patients in urgent need through a secure, reliable, and community driven platform.
+            </p>
 
-    <!-- Right Panel - About/Info -->
-    <div class="about_panel">
-        <h2>Why Donate Blood?</h2>
-        <p class="quote">
-            "Every drop counts. Your donation can save up to three lives."
-        </p>
-        <p>
-            LifeLine Blood Bank connects generous donors with patients in need through a secure,
-            reliable, and compassionate platform.
-        </p>
-
-        <div class="about_cards">
-            <div class="card">
-                <h3>🩸</h3>
-                <span>Join thousands of heroes who donate blood regularly.</span>
-            </div>
-            <div class="card">
-                <h3>🏥</h3>
-                <span>Post a request and get matched with compatible donors.</span>
-            </div>
-            <div class="card">
-                <h3>📊</h3>
-                <span>Admins can track donation trends and manage requests.</span>
+            <div class="about_cards">
+                <div class="card">
+                    <h3>12,000+</h3>
+                    <span>Registered Donors</span>
+                </div>
+                <div class="card">
+                    <h3>8,500+</h3>
+                    <span>Successful Donations</span>
+                </div>
+                <div class="card">
+                    <h3>24/7</h3>
+                    <span>Emergency Support</span>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- ========== FOOTER ========== -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
 </div>
 
-<!-- ========== FOOTER ========== -->
-<div th:replace="~{fragments/footer :: footer}"></div>
-
+<script src="https://kit.fontawesome.com/8169724830.js" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(
-        name = "donation_requests"
-)
+@Table(name = "donation_requests")
 public class DonationRequest {
 
     @Id

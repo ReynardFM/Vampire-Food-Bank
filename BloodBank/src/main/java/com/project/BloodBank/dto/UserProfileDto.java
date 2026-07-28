@@ -2,16 +2,29 @@ package com.project.BloodBank.dto;
 
 import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.Gender;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
 public class UserProfileDto {
 
+    @NotBlank(message = "Full name is required")
     private String fullName;
+
+    @NotBlank(message = "Phone number is required")
     private String phoneNumber;
+
+    @NotNull(message = "Blood group is required")
     private BloodGroup bloodGroup;
+
+    @NotNull(message = "Date of birth is required")
     private LocalDate dateOfBirth;
+
+    @NotNull(message = "Gender is required")
     private Gender gender;
+
+    @NotBlank(message = "Address is required")
     private String address;
 
     public UserProfileDto() {

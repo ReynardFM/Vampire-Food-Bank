@@ -7,8 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface DonationRepository extends JpaRepository<Donation, Long>
-{
+public interface DonationRepository extends JpaRepository<Donation, Long>{
     List<Donation> findByDonor(User donor);
     List<Donation> findByDonorOrderByDonationDateDesc(User donor);
     @Query("SELECT COUNT(d) FROM Donation d WHERE YEAR(d.donationDate) = YEAR(CURRENT_DATE) AND MONTH(d.donationDate) = MONTH(CURRENT_DATE)")

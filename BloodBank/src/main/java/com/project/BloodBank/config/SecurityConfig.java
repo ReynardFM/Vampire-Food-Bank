@@ -36,14 +36,22 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/","/login", "/register", "/css/**", "/js/**","/images/**").permitAll()
+                        .requestMatchers("/","/login", "/register", "/css/**", "/js/**","/images/**","/favicon.ico","/error").permitAll()
                         .requestMatchers("/admin/**", "/dashboard").hasRole("ADMIN")
                         .requestMatchers("/donor/**", "/requests/**", "/donations/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/dashboard", false)
+                        .successHandler((request, response, authentication) -> {
+                            boolean isAdmin = authentication.getAuthorities().stream()
+                                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                            if (isAdmin) {
+                                response.sendRedirect("/dashboard");
+                            } else {
+                                response.sendRedirect("/donor/profile");
+                            }
+                        })
                         .permitAll()
                 )
                 .logout(logout -> logout

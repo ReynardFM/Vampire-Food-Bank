@@ -1,98 +1,117 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>VFB - Login</title>
-    <link rel="stylesheet" th:href="@{/css/styles_home.css}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeLine Blood Bank - Login</title>
+    <!-- Your custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div class="main_container">
-        <div class="nav_bar">
-            <div class="left_nav"><img src="../static/images/logo_white.png" alt="logo">
-                <div class="brand">
-                    <h2>LifeLine Blood Bank</h2>
-                    <span>www.lifeline.com</span>
-                </div>
-            </div>
-            <div class="right_nav">
-                <a href="#"><i class="fa-solid fa-arrow-right-to-bracket"></i>Log In</a>
-                <a href="#"><i class="fa-solid fa-file-pen"></i>Register</a>
-                <a href="#"><i class="fa-solid fa-circle-info"></i>About Us</a>
-                <a href="#"><i class="fa-solid fa-chart-pie"></i>Dashboard</a>
-            </div>
-        </div>
-        <div class="form_container">
-            <div class="login_panel">
+<!-- ========== HEADER ========== -->
+<div th:replace="~{fragments/header :: header(user=null)}"></div>
 
-                <h1>Welcome Back</h1>
+<!-- ========== LOGIN FORM ========== -->
+<div class="form_container">
+    <!-- Left Panel: Login Form -->
+    <div class="login_panel">
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Log in to your account to continue.</p>
 
-                <p class="subtitle">
-                    Sign in to continue to your donor account.
-                </p>
+        <!-- Success message (e.g., after registration) -->
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <!-- Logout message -->
+        <div th:if="${logout}" class="alert alert-info" th:text="${logout}"></div>
+        <!-- Error message (from login failure) -->
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-                <form>
+        <form th:action="@{/login}" method="post">
+            <!-- CSRF token auto-added by Thymeleaf -->
 
-                    <label>Email</label>
-                    <input type="email" placeholder="Email Address">
+            <label for="username">Email Address</label>
+            <input type="email" id="username" name="username" placeholder="you@example.com" required autofocus />
 
-                    <label>Password</label>
-                    <input type="password" placeholder="Password">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" required />
 
-                    <div class="form_options">
-                        <label>
-                            <input type="checkbox">
-                            Remember me
-                        </label>
-
-                        <a href="#">Forgot Password?</a>
-                    </div>
-                    <button type="submit">
-                        Log In
-                    </button>
-                </form>
-                <p class="register">
-                    Don't have an account?
-                    <a href="#">Register here.</a>
-                </p>
-
+            <div class="form_options">
+                <label>
+                    <input type="checkbox" name="remember-me" /> Remember me
+                </label>
+                <!-- Optional: forgot password link (can be added later) -->
+                <!-- <a href="#">Forgot password?</a> -->
             </div>
 
-            <div class="about_panel">
+            <button type="submit">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Log In
+            </button>
+        </form>
 
-                <h2>Every Donation Tells a Story.</h2>
-                <p class="quote">
-                    "One blood donation has the power to save up to three lives. Your generosity today can become someone's tomorrow."
-                </p>
-                <p>
-                    LifeLine Blood Bank is dedicated to connecting generous donors with patients in urgent need through a secure, reliable, and community driven platform.
-                </p>
+        <p class="register">
+            Don't have an account? <a th:href="@{/register}">Register here</a>
+        </p>
+    </div>
 
-                <div class="about_cards">
-                    <div class="card">
-                        <h3>12,000+</h3>
-                        <span>Registered Donors</span>
-                    </div>
+    <!-- Right Panel: About/Info -->
+    <div class="about_panel">
+        <h2>Why Donate Blood?</h2>
+        <p class="quote">
+            "Every drop counts. Your donation can save up to three lives."
+        </p>
+        <p>
+            LifeLine Blood Bank connects generous donors with patients in need through a secure,
+            reliable, and compassionate platform.
+        </p>
 
-                    <div class="card">
-                        <h3>8,500+</h3>
-                        <span>Successful Donations</span>
-                    </div>
-
-                    <div class="card">
-                        <h3>24/7</h3>
-                        <span>Emergency Support</span>
-                    </div>
-                </div>
-
+        <div class="about_cards">
+            <div class="card">
+                <h3>🩸</h3>
+                <span>Safe &amp; secure donations</span>
+            </div>
+            <div class="card">
+                <h3>🏥</h3>
+                <span>Trusted by hospitals</span>
+            </div>
+            <div class="card">
+                <h3>❤️</h3>
+                <span>Save lives today</span>
             </div>
         </div>
+    </div>
+</div>
 
-        <div th:replace="~{fragments/footer :: footer}"></div>
+<!-- ========== FOOTER ========== -->
+<div th:replace="~{fragments/footer :: footer}"></div>
 
+<!-- Optional: Add custom styles for alerts (if not already in style.css) -->
+<style>
+    .alert {
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+</style>
 
-
-    <script src="https://kit.fontawesome.com/8169724830.js" crossorigin="anonymous"></script>
 </body>
 </html>

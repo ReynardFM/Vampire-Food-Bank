@@ -2,14 +2,27 @@ package com.project.BloodBank.dto;
 
 import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.UrgencyLevel;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class DonationRequestDto {
 
+    @NotNull(message = "Blood group is required")
     private BloodGroup requestedBloodGroup;
+
+    @Min(value = 1, message = "At least 1 unit must be requested")
     private int unitsNeeded;
+
+    @NotBlank(message = "Hospital name is required")
     private String hospitalName;
+
+    @NotBlank(message = "Hospital address is required")
     private String hospitalAddress;
+
+    @NotNull(message = "Urgency level is required")
     private UrgencyLevel urgencyLevel;
+
     private String notes;
 
     public DonationRequestDto() {
