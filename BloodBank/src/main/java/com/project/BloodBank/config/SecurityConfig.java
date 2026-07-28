@@ -36,8 +36,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/","/login", "/register", "/css/**", "/js/**","/images/**","/favicon.ico","/error").permitAll()
-                        .requestMatchers("/admin/**", "/dashboard").hasRole("ADMIN")
+                        .requestMatchers("/", "/home", "/about-us", "/login", "/register",
+                                "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers("/admin/**", "/dashboard", "/dashboard/**")
+                        .hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/donor/**", "/requests/**", "/donations/**").authenticated()
                         .anyRequest().authenticated()
                 )
@@ -57,6 +59,9 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
                 .authenticationProvider(authenticationProvider());

@@ -1,10 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Administration</div>
+            <h1>Blood Bank Dashboard</h1>
+            <p>Monitor donor activity, monthly donations, and request progress at a glance.</p>
+        </div>
+        <a class="btn-primary" th:href="@{/admin/pending}">
+            <i class="fa-solid fa-clock"></i> Review pending requests
+        </a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <section class="stats-grid">
+        <article class="stat-card">
+            <i class="fa-solid fa-users"></i>
+            <strong th:text="${totalDonors}">0</strong>
+            <span>Active donors</span>
+        </article>
+        <article class="stat-card">
+            <i class="fa-solid fa-droplet"></i>
+            <strong th:text="${donationsThisMonth}">0</strong>
+            <span>Donations this month</span>
+        </article>
+        <article class="stat-card">
+            <i class="fa-solid fa-hourglass-half"></i>
+            <strong th:text="${pendingRequests}">0</strong>
+            <span>Requests awaiting review</span>
+        </article>
+    </section>
+
+    <div class="split-layout" style="margin-top: 24px;">
+        <section class="surface-card">
+            <h2 class="section-title">Donations by blood group</h2>
+            <div class="blood-bars">
+                <div class="blood-row" th:each="group : ${bloodGroups}">
+                    <strong th:text="${group.displayName}">A+</strong>
+                    <div class="bar-track">
+                        <div class="bar-fill"
+                             th:style="${'width:' + (donationsByBloodGroup.get(group) != null ? donationsByBloodGroup.get(group) * 10 : 0) + '%'}"></div>
+                    </div>
+                    <span th:text="${donationsByBloodGroup.get(group) != null ? donationsByBloodGroup.get(group) : 0}">0</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="surface-card">
+            <h2 class="section-title">Request status</h2>
+            <div class="blood-bars">
+                <div class="blood-row" th:each="status : ${requestStatuses}">
+                    <span class="badge"
+                          th:classappend="${'badge-' + #strings.toLowerCase(status.name())}"
+                          th:text="${status}">PENDING</span>
+                    <div class="bar-track">
+                        <div class="bar-fill"
+                             th:style="${'width:' + (requestStatusCounts.get(status) != null ? requestStatusCounts.get(status) * 10 : 0) + '%'}"></div>
+                    </div>
+                    <span th:text="${requestStatusCounts.get(status) != null ? requestStatusCounts.get(status) : 0}">0</span>
+                </div>
+            </div>
+            <a class="btn-secondary" style="margin-top: 24px;" th:href="@{/admin/donors}">
+                <i class="fa-solid fa-address-book"></i> Manage donors
+            </a>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

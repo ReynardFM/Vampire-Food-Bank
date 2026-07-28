@@ -2,6 +2,7 @@ package com.project.BloodBank.controller;
 
 import com.project.BloodBank.dto.UserProfileDto;
 import com.project.BloodBank.model.enums.BloodGroup;
+import com.project.BloodBank.model.enums.Gender;
 import com.project.BloodBank.model.User;
 import com.project.BloodBank.service.DonationService;
 import com.project.BloodBank.service.UserService;
@@ -22,6 +23,16 @@ public class DonorController {
     public DonorController(UserService userService, DonationService donationService) {
         this.userService = userService;
         this.donationService = donationService;
+    }
+
+    @ModelAttribute("bloodGroups")
+    public BloodGroup[] bloodGroups() {
+        return BloodGroup.values();
+    }
+
+    @ModelAttribute("genders")
+    public Gender[] genders() {
+        return Gender.values();
     }
 
     @GetMapping("/profile")
@@ -91,7 +102,7 @@ public class DonorController {
             return "redirect:/donor/profile";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Failed to complete profile: " + e.getMessage());
-            return "redirect:/register/complete-profile";
+            return "redirect:/donor/complete-profile";
         }
     }
 
@@ -99,8 +110,6 @@ public class DonorController {
     public String searchDonors(
             @RequestParam(required = false) BloodGroup bloodGroup,
             Model model) {
-
-        model.addAttribute("bloodGroups", BloodGroup.values());
 
         if (bloodGroup != null) {
             model.addAttribute("results", userService.searchDonorsByBloodGroup(bloodGroup));

@@ -1,10 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Requests - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Admin review</div>
+            <h1>Pending Requests</h1>
+            <p>Review incoming blood requests and approve only complete, valid submissions.</p>
+        </div>
+        <a class="btn-secondary" th:href="@{/dashboard}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <section class="surface-card table-wrap">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Date</th>
+                <th>Requester</th>
+                <th>Blood</th>
+                <th>Units</th>
+                <th>Hospital</th>
+                <th>Urgency</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(requests)}">
+                <td class="empty-state" colspan="7">
+                    <i class="fa-regular fa-circle-check"></i> There are no pending requests.
+                </td>
+            </tr>
+            <tr th:each="request : ${requests}">
+                <td th:text="${#temporals.format(request.requestDate, 'MMM d, yyyy')}">Jul 28, 2026</td>
+                <td th:text="${request.requestedBy.fullName}">Donor</td>
+                <td><span class="badge badge-blood" th:text="${request.requestedBloodGroup.displayName}">A+</span></td>
+                <td th:text="${request.unitsNeeded}">1</td>
+                <td>
+                    <strong th:text="${request.hospitalName}">Hospital</strong><br>
+                    <small th:text="${request.hospitalAddress}">Address</small>
+                </td>
+                <td th:text="${request.urgencyLevel}">HIGH</td>
+                <td>
+                    <div class="inline-actions">
+                        <a class="btn-secondary" th:href="@{/requests/{id}(id=${request.id})}">View</a>
+                        <form th:action="@{/admin/approve/{id}(id=${request.id})}" method="post">
+                            <button class="btn-success" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
+                        </form>
+                        <form th:action="@{/admin/reject/{id}(id=${request.id})}" method="post">
+                            <button class="btn-danger" type="submit"><i class="fa-solid fa-xmark"></i> Reject</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

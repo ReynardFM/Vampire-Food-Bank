@@ -16,8 +16,8 @@ body,
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    height: 15%;
-    padding: 0 30px;
+    min-height: 88px;
+    padding: 8px 30px;
     font-size: 20px;
     background: #d62929;
 }
@@ -31,14 +31,17 @@ body,
 
 .left_nav {
     align-items: center;
-    width: 30%;
+    flex: 0 0 auto;
     color: #fff;
     font: 900 30px "Dela Gothic One", sans-serif;
 }
 
 .right_nav {
-    justify-content: space-between;
-    width: 45%;
+    justify-content: flex-end;
+    align-items: center;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
     font-family: "Outfit", sans-serif;
 }
 
@@ -57,8 +60,10 @@ body,
 }
 
 .left_nav img {
-    width: 18%;
-    margin-right: 30px;
+    width: 58px;
+    height: 58px;
+    margin-right: 16px;
+    object-fit: contain;
     transition: transform .2s;
 }
 
@@ -70,11 +75,13 @@ body,
 .right_nav a {
     justify-content: center;
     align-items: center;
-    width: 300px;
-    padding: 15px 20px;
+    width: auto;
+    flex: 0 0 auto;
+    padding: 10px 11px;
     border-radius: 45px;
     color: #fff;
     text-decoration: none;
+    font-size: 14px;
     font-weight: 600;
     transition: transform .2s, background-color .2s;
 }
@@ -84,8 +91,74 @@ body,
 }
 
 .right_nav a:hover {
-    transform: scale(1.2);
+    transform: translateY(-2px);
     background: #b61c1c;
+}
+
+.nav-logout-form {
+    display: inline-flex;
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.nav-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 11px;
+    border: 0;
+    border-radius: 45px;
+    background: transparent;
+    color: white;
+    font: 600 14px "Outfit", sans-serif;
+    cursor: pointer;
+    transition: transform .2s, background-color .2s;
+}
+
+.nav-logout:hover {
+    transform: translateY(-2px);
+    background: #b61c1c;
+}
+
+.welcome-text {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 8px;
+    margin-left: 5px;
+    padding: 7px 11px;
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .12);
+    color: white;
+    line-height: 1.1;
+}
+
+.welcome-text > i {
+    font-size: 21px;
+}
+
+.welcome-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.welcome-copy small {
+    margin-bottom: 3px;
+    opacity: .78;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.welcome-copy strong {
+    overflow: hidden;
+    max-width: 125px;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ========== FORM CONTAINER (Shared Layout) ========== */
@@ -245,6 +318,7 @@ body,
 /* ========== FOOTER ========== */
 .footer {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     padding: 50px 8%;
     background: #222;
@@ -314,6 +388,8 @@ body,
 }
 
 .footer_bottom {
+    width: 100%;
+    margin-top: 32px;
     padding: 18px;
     text-align: center;
     background: #181818;
@@ -324,6 +400,48 @@ body,
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 900px) {
+    .nav_bar {
+        height: auto;
+        min-height: 110px;
+        padding: 20px 5%;
+        gap: 20px;
+    }
+
+    .left_nav {
+        width: auto;
+    }
+
+    .left_nav img {
+        width: 58px;
+        margin-right: 14px;
+    }
+
+    .brand h2 {
+        font-size: 21px;
+    }
+
+    .right_nav {
+        justify-content: flex-end;
+        width: auto;
+        flex-wrap: wrap;
+    }
+
+    .right_nav a {
+        width: auto;
+        padding: 10px 12px;
+        font-size: 15px;
+    }
+
+    .nav-logout {
+        padding: 10px 12px;
+        font-size: 15px;
+    }
+
+    .welcome-text {
+        order: -1;
+        margin-left: 0;
+    }
+
     .form_container {
         flex-direction: column;
         padding: 30px 5%;
@@ -340,6 +458,32 @@ body,
 
     .about_panel {
         border-radius: 0 0 25px 25px;
+    }
+
+    .footer_left {
+        width: 100%;
+        margin-bottom: 30px;
+    }
+}
+
+@media (max-width: 600px) {
+    .nav_bar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .right_nav {
+        justify-content: flex-start;
+    }
+
+    .welcome-text {
+        width: 100%;
+        color: white;
+        font-size: 14px;
+    }
+
+    .footer {
+        gap: 28px;
     }
 }
 

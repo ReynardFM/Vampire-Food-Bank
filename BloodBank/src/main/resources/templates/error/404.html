@@ -2,19 +2,25 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Not Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-
-<div th:replace="~{fragments/header :: header}"></div>
-
-<main>
-    <h1>404 - Not Found</h1>
-    <p th:text="${message}">The requested resource could not be found.</p>
-    <a href="/dashboard">Return to dashboard</a>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
+<main class="page-shell">
+    <section class="surface-card error-card">
+        <div class="error-code">404</div>
+        <h1>We couldn’t find that page.</h1>
+        <p th:text="${message != null ? message : 'The page may have moved or the address may be incorrect.'}">
+            The page may have moved or the address may be incorrect.
+        </p>
+        <a class="btn-primary" th:href="@{/home}"><i class="fa-solid fa-house"></i> Return home</a>
+    </section>
 </main>
-
 <div th:replace="~{fragments/footer :: footer}"></div>
-
 </body>
 </html>

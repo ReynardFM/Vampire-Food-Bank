@@ -1,10 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Donor profile</div>
+            <h1>Complete Your Profile</h1>
+            <p>Accurate contact and blood-group information helps LifeLine connect the right donors with urgent needs.</p>
+        </div>
+        <a class="btn-secondary" th:href="@{/donor/profile}"><i class="fa-solid fa-arrow-left"></i> My profile</a>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <section class="surface-card">
+        <form th:action="@{/donor/profile-edit}" th:object="${profileDto}" method="post">
+            <div class="form-grid">
+                <div class="form-field full">
+                    <label for="fullName">Full name</label>
+                    <input id="fullName" type="text" th:field="*{fullName}" placeholder="Jane Doe">
+                    <span class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></span>
+                </div>
+                <div class="form-field">
+                    <label for="phoneNumber">Phone number</label>
+                    <input id="phoneNumber" type="text" th:field="*{phoneNumber}" placeholder="+1 416 555 0123">
+                    <span class="field-error" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></span>
+                </div>
+                <div class="form-field">
+                    <label for="bloodGroup">Blood group</label>
+                    <select id="bloodGroup" th:field="*{bloodGroup}">
+                        <option value="">Select blood group</option>
+                        <option th:each="group : ${bloodGroups}" th:value="${group}" th:text="${group.displayName}"></option>
+                    </select>
+                    <span class="field-error" th:if="${#fields.hasErrors('bloodGroup')}" th:errors="*{bloodGroup}"></span>
+                </div>
+                <div class="form-field">
+                    <label for="dateOfBirth">Date of birth</label>
+                    <input id="dateOfBirth" type="date" th:field="*{dateOfBirth}">
+                    <span class="field-error" th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></span>
+                </div>
+                <div class="form-field">
+                    <label for="gender">Gender</label>
+                    <select id="gender" th:field="*{gender}">
+                        <option value="">Select gender</option>
+                        <option th:each="genderOption : ${genders}" th:value="${genderOption}"
+                                th:text="${#strings.capitalize(#strings.toLowerCase(genderOption.name()))}"></option>
+                    </select>
+                    <span class="field-error" th:if="${#fields.hasErrors('gender')}" th:errors="*{gender}"></span>
+                </div>
+                <div class="form-field full">
+                    <label for="address">Address</label>
+                    <textarea id="address" rows="4" th:field="*{address}" placeholder="Street, city, province, postal code"></textarea>
+                    <span class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></span>
+                </div>
+            </div>
+            <div class="inline-actions" style="margin-top: 24px;">
+                <button class="btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save profile</button>
+                <a class="btn-secondary" th:href="@{/donor/profile}">Cancel</a>
+            </div>
+        </form>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

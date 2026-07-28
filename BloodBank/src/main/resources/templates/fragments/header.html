@@ -39,9 +39,9 @@
             <a th:if="${user.role.name() == 'ADMIN'}" th:href="@{/dashboard}">
                 <i class="fa-solid fa-chart-pie"></i>Dashboard
             </a>
-            <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" style="background: none; border: none; color: white; font-weight: 600; cursor: pointer; padding: 15px 20px; font-family: 'Outfit', sans-serif; font-size: 20px;">
-                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 10px;"></i>Logout
+            <form class="nav-logout-form" th:action="@{/logout}" method="post">
+                <button class="nav-logout" type="submit">
+                    <i class="fa-solid fa-right-from-bracket"></i>Logout
                 </button>
             </form>
         </th:block>
@@ -52,8 +52,12 @@
         </a>
 
         <!-- Welcome message (only when logged in) -->
-        <span th:if="${user != null}" class="welcome-text"
-              th:text="'Welcome, ' + ${user.fullName}">
+        <span th:if="${user != null}" class="welcome-text">
+            <i class="fa-solid fa-circle-user"></i>
+            <span class="welcome-copy">
+                <small>Welcome</small>
+                <strong th:text="${user.fullName}">John Doe</strong>
+            </span>
         </span>
     </div>
 </div>

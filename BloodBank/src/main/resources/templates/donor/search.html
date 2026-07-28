@@ -1,10 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Donors - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Donor directory</div>
+            <h1>Find Compatible Donors</h1>
+            <p>Filter the active donor directory by blood group to locate potential matches.</p>
+        </div>
+    </div>
+
+    <section class="surface-card" style="margin-bottom: 24px;">
+        <form th:action="@{/donor/search}" method="get">
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="bloodGroup">Blood group</label>
+                    <select id="bloodGroup" name="bloodGroup" required>
+                        <option value="">Choose a blood group</option>
+                        <option th:each="group : ${bloodGroups}" th:value="${group}" th:text="${group.displayName}"
+                                th:selected="${selectedBloodGroup == group}"></option>
+                    </select>
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button class="btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search donors</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="surface-card table-wrap" th:if="${selectedBloodGroup != null}">
+        <h2 class="section-title">Results for <span th:text="${selectedBloodGroup.displayName}">A+</span></h2>
+        <table class="data-table">
+            <thead><tr><th>Donor</th><th>Blood group</th><th>Phone</th><th>Last donation</th><th>Address</th></tr></thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(results)}"><td class="empty-state" colspan="5">No active donors match this blood group.</td></tr>
+            <tr th:each="donor : ${results}">
+                <td th:text="${donor.fullName}">Donor name</td>
+                <td><span class="badge badge-blood" th:text="${donor.bloodGroup.displayName}">A+</span></td>
+                <td th:text="${donor.phoneNumber != null ? donor.phoneNumber : 'Not provided'}">Phone</td>
+                <td th:text="${donor.lastDonationDate != null ? donor.lastDonationDate : 'No donations recorded'}">None</td>
+                <td th:text="${donor.address != null ? donor.address : 'Not provided'}">Address</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
