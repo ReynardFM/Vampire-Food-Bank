@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Donors - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
+
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Administration</div>
+            <h1>Manage Donors</h1>
+            <p>The active donor directory. Deactivating an account hides it from search and blocks sign-in.</p>
+        </div>
+        <a class="btn-secondary" th:href="@{/dashboard}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <section class="surface-card table-wrap">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Blood</th>
+                <th>Phone</th>
+                <th>Last donation</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(donors)}">
+                <td class="empty-state" colspan="7">
+                    <i class="fa-regular fa-face-smile"></i> No active donors yet.
+                </td>
+            </tr>
+            <tr th:each="donor : ${donors}">
+                <td th:text="${donor.fullName}">Donor name</td>
+                <td th:text="${donor.email}">donor@example.com</td>
+                <td>
+                    <span class="badge badge-blood" th:if="${donor.bloodGroup != null}"
+                          th:text="${donor.bloodGroup.displayName}">A+</span>
+                    <span th:if="${donor.bloodGroup == null}">Not set</span>
+                </td>
+                <td th:text="${donor.phoneNumber != null ? donor.phoneNumber : 'Not provided'}">Phone</td>
+                <td th:text="${donor.lastDonationDate != null ? donor.lastDonationDate : 'None recorded'}">None</td>
+                <td th:text="${donor.role}">DONOR</td>
+                <td>
+                    <div class="inline-actions">
+                        <form th:action="@{/admin/deactivate/{id}(id=${donor.id})}" method="post">
+                            <button class="btn-danger" type="submit">
+                                <i class="fa-solid fa-user-slash"></i> Deactivate
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - LifeLine Blood Bank</title>
+    <!-- Shared styles -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- Reuses the home page layout classes -->
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="main_container home-panel">
+
+    <!-- ========== HEADER ========== -->
+    <div th:replace="~{fragments/header :: header(user=${user})}"></div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="form_container">
+        <!-- Left Panel: Story -->
+        <div class="login_panel" style="border-radius: 25px 0 0 25px;">
+            <h1>About LifeLine</h1>
+            <p class="subtitle">
+                We connect generous donors with the patients who need them, quickly and safely.
+            </p>
+
+            <p style="margin-bottom: 20px; color: #555; line-height: 1.7;">
+                LifeLine Blood Bank started from a simple observation: in an emergency, the blood a
+                patient needs usually exists somewhere nearby &mdash; it just cannot be found in time.
+                We keep a verified donor directory and a request queue that staff can act on within
+                minutes instead of days.
+            </p>
+
+            <p style="margin-bottom: 20px; color: #555; line-height: 1.7;">
+                Every blood request is reviewed by an administrator before it is approved, and every
+                donation is recorded against the donor's profile so that eligibility gaps between
+                donations are respected.
+            </p>
+
+            <div style="display: flex; gap: 15px; margin: 30px 0 20px; flex-wrap: wrap;">
+                <a th:if="${user == null}" th:href="@{/register}" class="btn-home-primary">
+                    <i class="fa-solid fa-heart"></i> Become a Donor
+                </a>
+                <a th:if="${user != null}" th:href="@{/donor/search}" class="btn-home-primary">
+                    <i class="fa-solid fa-magnifying-glass"></i> Find Donors
+                </a>
+                <a th:href="@{/home}" class="btn-home-secondary">
+                    <i class="fa-solid fa-house"></i> Back Home
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Panel: Promise -->
+        <div class="about_panel">
+            <h2>Built Around One Promise.</h2>
+            <p class="quote">
+                "Nobody should lose someone because the right donor could not be reached in time."
+            </p>
+            <p>
+                That promise shapes how we handle matching, verification and urgency. Requests marked
+                critical move to the front of the review queue, and donors are only contacted about
+                the blood groups they can actually help with.
+            </p>
+
+            <div class="about_cards">
+                <div class="card">
+                    <h3>Verified</h3>
+                    <span>Every Donor Reviewed</span>
+                </div>
+                <div class="card">
+                    <h3>Fast</h3>
+                    <span>Minutes, Not Days</span>
+                </div>
+                <div class="card">
+                    <h3>Private</h3>
+                    <span>Details Protected</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== FOOTER ========== -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+</div>
+
+<script src="https://kit.fontawesome.com/8169724830.js" crossorigin="anonymous"></script>
+</body>
+</html>
