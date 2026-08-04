@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Something went wrong - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
+
+<main class="page-shell">
+    <section class="surface-card error-card">
+        <div class="error-code" th:text="${status != null ? status : 'Error'}">500</div>
+
+        <h1 th:if="${status != null and status == 403}">You don't have access to that page.</h1>
+        <h1 th:unless="${status != null and status == 403}">Something went wrong.</h1>
+
+        <p th:if="${status != null and status == 403}">
+            That area is restricted to administrators. If you think you should have access, ask an
+            administrator to check your account.
+        </p>
+        <p th:unless="${status != null and status == 403}">
+            The request could not be completed. Please try again &mdash; if it keeps happening,
+            let an administrator know.
+        </p>
+
+        <a class="btn-primary" th:href="@{/home}"><i class="fa-solid fa-house"></i> Return home</a>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
