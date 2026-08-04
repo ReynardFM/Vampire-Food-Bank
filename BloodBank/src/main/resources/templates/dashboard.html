@@ -74,9 +74,14 @@
                     <span th:text="${requestStatusCounts.get(status) != null ? requestStatusCounts.get(status) : 0}">0</span>
                 </div>
             </div>
-            <a class="btn-secondary" style="margin-top: 24px;" th:href="@{/admin/donors}">
-                <i class="fa-solid fa-address-book"></i> Manage donors
-            </a>
+            <div class="inline-actions" style="margin-top: 24px;">
+                <a class="btn-secondary" th:href="@{/admin/requests}">
+                    <i class="fa-solid fa-list-check"></i> All requests
+                </a>
+                <a class="btn-secondary" th:href="@{/admin/donors}">
+                    <i class="fa-solid fa-address-book"></i> Manage donors
+                </a>
+            </div>
         </section>
     </div>
 </main>

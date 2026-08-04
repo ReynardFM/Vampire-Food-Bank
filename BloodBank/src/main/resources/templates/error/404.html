@@ -15,7 +15,7 @@
     <section class="surface-card error-card">
         <div class="error-code">404</div>
         <h1>We couldn’t find that page.</h1>
-        <p th:text="${message != null ? message : 'The page may have moved or the address may be incorrect.'}">
+        <p th:text="${!#strings.isEmpty(message) ? message : 'The page may have moved or the address may be incorrect.'}">
             The page may have moved or the address may be incorrect.
         </p>
         <a class="btn-primary" th:href="@{/home}"><i class="fa-solid fa-house"></i> Return home</a>

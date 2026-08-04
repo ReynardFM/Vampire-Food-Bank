@@ -8,11 +8,14 @@ import com.project.BloodBank.model.enums.UrgencyLevel;
 import com.project.BloodBank.service.DonationRequestService;
 import com.project.BloodBank.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Map;
 
 @Controller
 @RequestMapping("/requests")
@@ -60,10 +63,32 @@ public class DonationRequestController {
         }
     }
 
+    /**
+     * URL-facing sort name to the property actually ordered on. Urgency differs because the enum
+     * column sorts alphabetically rather than by severity.
+     */
+    private static final Map<String, String> LIST_SORT_FIELDS = Map.of(
+            "requestDate", "requestDate",
+            "requestedBloodGroup", "requestedBloodGroup",
+            "unitsNeeded", "unitsNeeded",
+            "hospitalName", "hospitalName",
+            "urgencyLevel", "urgencySeverity",
+            "status", "status");
+
     @GetMapping("/list")
-    public String listRequests(Model model) {
+    public String listRequests(
+            @RequestParam(defaultValue = "requestDate") String sort,
+            @RequestParam(defaultValue = "desc") String dir,
+            Model model) {
+
+        String requested = LIST_SORT_FIELDS.containsKey(sort) ? sort : "requestDate";
+        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
         User currentUser = userService.getCurrentUser();
-        model.addAttribute("requests", requestService.getRequestsByUser(currentUser));
+        model.addAttribute("requests", requestService.getRequestsByUser(
+                currentUser, Sort.by(direction, LIST_SORT_FIELDS.get(requested))));
+        model.addAttribute("sort", requested);
+        model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
         return "requests/list";
     }
 

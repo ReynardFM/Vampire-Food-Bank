@@ -34,6 +34,14 @@ public class DonationRequest {
     @Column(nullable = false)
     private UrgencyLevel urgencyLevel;
 
+    /**
+     * Numeric mirror of {@link UrgencyLevel#getSeverity()}, kept only so the admin queue can be
+     * ordered by severity. Sorting on urgency_level itself is alphabetical and therefore wrong.
+     * Derived, never set directly: {@link #setUrgencyLevel} and the lifecycle hook maintain it.
+     */
+    @Column(nullable = false)
+    private int urgencySeverity;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "requested_by_id",
@@ -69,6 +77,7 @@ public class DonationRequest {
     }
 
     @PrePersist
+    @PreUpdate
     public void setDefaultValues() {
         if (status == null) {
             status = RequestStatus.PENDING;
@@ -76,6 +85,11 @@ public class DonationRequest {
 
         if (requestDate == null) {
             requestDate = LocalDateTime.now();
+        }
+
+        // Safety net for rows built without going through setUrgencyLevel.
+        if (urgencyLevel != null) {
+            urgencySeverity = urgencyLevel.getSeverity();
         }
     }
 
@@ -138,6 +152,12 @@ public class DonationRequest {
 
     public void setUrgencyLevel(UrgencyLevel urgencyLevel) {
         this.urgencyLevel = urgencyLevel;
+        this.urgencySeverity = urgencyLevel != null ? urgencyLevel.getSeverity() : 0;
+    }
+
+    /** Derived from the urgency level; there is deliberately no setter. */
+    public int getUrgencySeverity() {
+        return urgencySeverity;
     }
 
     public User getRequestedBy() {

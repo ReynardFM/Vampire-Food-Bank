@@ -42,7 +42,15 @@
     <section class="surface-card table-wrap" th:if="${selectedBloodGroup != null}">
         <h2 class="section-title">Results for <span th:text="${selectedBloodGroup.displayName}">A+</span></h2>
         <table class="data-table">
-            <thead><tr><th>Donor</th><th>Blood group</th><th>Phone</th><th>Last donation</th><th>Address</th></tr></thead>
+            <thead>
+            <tr>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Donor', 'fullName', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Blood group', 'bloodGroup', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Phone', 'phoneNumber', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Last donation', 'lastDonationDate', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Address', 'address', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+            </tr>
+            </thead>
             <tbody>
             <tr th:if="${#lists.isEmpty(results)}"><td class="empty-state" colspan="5">No active donors match this blood group.</td></tr>
             <tr th:each="donor : ${results}">

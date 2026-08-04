@@ -16,8 +16,11 @@
     <div class="page-heading">
         <div>
             <div class="eyebrow">Administration</div>
-            <h1>Manage Donors</h1>
-            <p>The active donor directory. Deactivating an account hides it from search and blocks sign-in.</p>
+            <h1>Manage Accounts</h1>
+            <p>
+                Every active account. Deactivating a donor hides them from search and blocks sign-in;
+                administrator accounts are protected and cannot be deactivated here.
+            </p>
         </div>
         <a class="btn-secondary" th:href="@{/dashboard}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
     </div>
@@ -29,12 +32,12 @@
         <table class="data-table">
             <thead>
             <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Blood</th>
-                <th>Phone</th>
-                <th>Last donation</th>
-                <th>Role</th>
+                <th th:replace="~{fragments/sort :: sortable('Name', 'fullName', ${sort}, ${dir}, '/admin/donors')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Email', 'email', ${sort}, ${dir}, '/admin/donors')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Blood', 'bloodGroup', ${sort}, ${dir}, '/admin/donors')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Phone', 'phoneNumber', ${sort}, ${dir}, '/admin/donors')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Last donation', 'lastDonationDate', ${sort}, ${dir}, '/admin/donors')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Role', 'role', ${sort}, ${dir}, '/admin/donors')}"></th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -56,13 +59,19 @@
                 <td th:text="${donor.lastDonationDate != null ? donor.lastDonationDate : 'None recorded'}">None</td>
                 <td th:text="${donor.role}">DONOR</td>
                 <td>
-                    <div class="inline-actions">
+                    <!-- Administrator rows are listed for visibility only: deactivateUser refuses
+                         them, so offering the buttons would just produce an error. -->
+                    <div class="inline-actions" th:if="${donor.role.name() != 'ADMIN'}">
+                        <a class="btn-success" th:href="@{/donations/record/{id}(id=${donor.id})}">
+                            <i class="fa-solid fa-droplet"></i> Record donation
+                        </a>
                         <form th:action="@{/admin/deactivate/{id}(id=${donor.id})}" method="post">
                             <button class="btn-danger" type="submit">
                                 <i class="fa-solid fa-user-slash"></i> Deactivate
                             </button>
                         </form>
                     </div>
+                    <span class="field-hint" th:if="${donor.role.name() == 'ADMIN'}">Protected</span>
                 </td>
             </tr>
             </tbody>

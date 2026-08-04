@@ -6,6 +6,7 @@ import com.project.BloodBank.model.DonationRequest;
 import com.project.BloodBank.model.User;
 import com.project.BloodBank.model.enums.RequestStatus;
 import com.project.BloodBank.repository.DonationRequestRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,13 +36,25 @@ public class DonationRequestService {
     }
 
     @Transactional(readOnly = true)
-    public List<DonationRequest> getRequestsByUser(User user) {
-        return donationRequestRepository.findByRequestedBy(user);
+    public List<DonationRequest> getRequestsByUser(User user, Sort sort) {
+        return donationRequestRepository.findByRequestedBy(user, sort);
     }
 
     @Transactional(readOnly = true)
-    public List<DonationRequest> getPendingRequests() {
-        return donationRequestRepository.findByStatus(RequestStatus.PENDING);
+    public List<DonationRequest> getPendingRequests(Sort sort) {
+        return donationRequestRepository.findByStatus(RequestStatus.PENDING, sort);
+    }
+
+    /** Every request regardless of status; the pending queue only ever shows PENDING. */
+    @Transactional(readOnly = true)
+    public List<DonationRequest> getAllRequests(Sort sort) {
+        return donationRequestRepository.findAll(sort);
+    }
+
+    /** Approved requests are the only ones a donation may be linked to. */
+    @Transactional(readOnly = true)
+    public List<DonationRequest> getApprovedRequests() {
+        return donationRequestRepository.findByStatus(RequestStatus.APPROVED);
     }
 
     @Transactional(readOnly = true)

@@ -29,12 +29,27 @@
             </p>
 
             <div style="display: flex; gap: 15px; margin: 30px 0 20px; flex-wrap: wrap;">
-                <a th:href="@{/register}" class="btn-home-primary">
-                    <i class="fa-solid fa-heart"></i> Get Started
-                </a>
-                <a th:href="@{/login}" class="btn-home-secondary">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
-                </a>
+                <!-- Signing up or in makes no sense once you already are, so swap in the
+                     next useful action instead. -->
+                <th:block th:if="${user == null}">
+                    <a th:href="@{/register}" class="btn-home-primary">
+                        <i class="fa-solid fa-heart"></i> Get Started
+                    </a>
+                    <a th:href="@{/login}" class="btn-home-secondary">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+                    </a>
+                </th:block>
+                <th:block th:if="${user != null}">
+                    <a th:if="${user.role.name() == 'ADMIN'}" th:href="@{/dashboard}" class="btn-home-primary">
+                        <i class="fa-solid fa-chart-pie"></i> Go to Dashboard
+                    </a>
+                    <a th:if="${user.role.name() != 'ADMIN'}" th:href="@{/requests/create}" class="btn-home-primary">
+                        <i class="fa-solid fa-truck-medical"></i> Request Blood
+                    </a>
+                    <a th:href="@{/donor/search}" class="btn-home-secondary">
+                        <i class="fa-solid fa-magnifying-glass"></i> Find Donors
+                    </a>
+                </th:block>
             </div>
 
             <p style="margin-top: 20px; color: #999; font-size: 14px;">

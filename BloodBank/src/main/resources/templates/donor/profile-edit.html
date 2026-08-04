@@ -16,7 +16,7 @@
     <div class="page-heading">
         <div>
             <div class="eyebrow">Donor profile</div>
-            <h1>Complete Your Profile</h1>
+            <h1 th:text="${formAction == '/donor/complete-profile' ? 'Complete Your Profile' : 'Edit Your Profile'}">Edit Your Profile</h1>
             <p>Accurate contact and blood-group information helps LifeLine connect the right donors with urgent needs.</p>
         </div>
         <a class="btn-secondary" th:href="@{/donor/profile}"><i class="fa-solid fa-arrow-left"></i> My profile</a>
@@ -25,7 +25,7 @@
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
     <section class="surface-card">
-        <form th:action="@{/donor/profile-edit}" th:object="${profileDto}" method="post">
+        <form th:action="@{${formAction}}" th:object="${profileDto}" method="post">
             <div class="form-grid">
                 <div class="form-field full">
                     <label for="fullName">Full name</label>

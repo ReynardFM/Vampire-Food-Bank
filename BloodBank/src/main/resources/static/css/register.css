@@ -1,6 +1,6 @@
 /* ========== REGISTER PAGE SPECIFIC STYLES ========== */
 
-/* Match the left panel emphasis established in login.css */
+/* Match the left panel emphasis from the shared .login_panel layout in style.css */
 .register-panel .login_panel {
     border-radius: 25px 0 0 25px;
 }

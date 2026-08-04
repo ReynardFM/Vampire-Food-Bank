@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pending Requests - LifeLine Blood Bank</title>
+    <title>All Requests - LifeLine Blood Bank</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/pages.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -15,11 +15,13 @@
 <main class="page-shell">
     <div class="page-heading">
         <div>
-            <div class="eyebrow">Admin review</div>
-            <h1>Pending Requests</h1>
-            <p>Review incoming blood requests and approve only complete, valid submissions.</p>
+            <div class="eyebrow">Administration</div>
+            <h1>All Requests</h1>
+            <p>Every request and how it was decided, including the ones no longer in the pending queue.</p>
         </div>
-        <a class="btn-secondary" th:href="@{/dashboard}"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+        <a class="btn-primary" th:href="@{/admin/pending}">
+            <i class="fa-solid fa-clock"></i> Pending queue
+        </a>
     </div>
 
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
@@ -29,19 +31,20 @@
         <table class="data-table">
             <thead>
             <tr>
-                <th th:replace="~{fragments/sort :: sortable('Date', 'requestDate', ${sort}, ${dir}, '/admin/pending')}"></th>
-                <th th:replace="~{fragments/sort :: sortable('Requester', 'requestedBy.fullName', ${sort}, ${dir}, '/admin/pending')}"></th>
-                <th th:replace="~{fragments/sort :: sortable('Blood', 'requestedBloodGroup', ${sort}, ${dir}, '/admin/pending')}"></th>
-                <th th:replace="~{fragments/sort :: sortable('Units', 'unitsNeeded', ${sort}, ${dir}, '/admin/pending')}"></th>
-                <th th:replace="~{fragments/sort :: sortable('Hospital', 'hospitalName', ${sort}, ${dir}, '/admin/pending')}"></th>
-                <th th:replace="~{fragments/sort :: sortable('Urgency', 'urgencyLevel', ${sort}, ${dir}, '/admin/pending')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Date', 'requestDate', ${sort}, ${dir}, '/admin/requests')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Requester', 'requestedBy.fullName', ${sort}, ${dir}, '/admin/requests')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Blood', 'requestedBloodGroup', ${sort}, ${dir}, '/admin/requests')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Units', 'unitsNeeded', ${sort}, ${dir}, '/admin/requests')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Hospital', 'hospitalName', ${sort}, ${dir}, '/admin/requests')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Urgency', 'urgencyLevel', ${sort}, ${dir}, '/admin/requests')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Status', 'status', ${sort}, ${dir}, '/admin/requests')}"></th>
                 <th>Actions</th>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${#lists.isEmpty(requests)}">
-                <td class="empty-state" colspan="7">
-                    <i class="fa-regular fa-circle-check"></i> There are no pending requests.
+                <td class="empty-state" colspan="8">
+                    <i class="fa-regular fa-folder-open"></i> No requests have been raised yet.
                 </td>
             </tr>
             <tr th:each="request : ${requests}">
@@ -49,20 +52,16 @@
                 <td th:text="${request.requestedBy.fullName}">Donor</td>
                 <td><span class="badge badge-blood" th:text="${request.requestedBloodGroup.displayName}">A+</span></td>
                 <td th:text="${request.unitsNeeded}">1</td>
-                <td>
-                    <strong th:text="${request.hospitalName}">Hospital</strong><br>
-                    <small th:text="${request.hospitalAddress}">Address</small>
-                </td>
+                <td th:text="${request.hospitalName}">Hospital</td>
                 <td th:text="${request.urgencyLevel}">HIGH</td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${'badge-' + #strings.toLowerCase(request.status.name())}"
+                          th:text="${request.status}">PENDING</span>
+                </td>
                 <td>
                     <div class="inline-actions">
                         <a class="btn-secondary" th:href="@{/requests/{id}(id=${request.id})}">View</a>
-                        <form th:action="@{/admin/approve/{id}(id=${request.id})}" method="post">
-                            <button class="btn-success" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
-                        </form>
-                        <form th:action="@{/admin/reject/{id}(id=${request.id})}" method="post">
-                            <button class="btn-danger" type="submit"><i class="fa-solid fa-xmark"></i> Reject</button>
-                        </form>
                     </div>
                 </td>
             </tr>

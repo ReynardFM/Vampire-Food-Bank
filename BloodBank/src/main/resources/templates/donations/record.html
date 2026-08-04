@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Donation - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
+
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Administration</div>
+            <h1>Record a Donation</h1>
+            <p>
+                Logging a donation updates the donor's history, their last donation date, and the
+                dashboard totals. Linking it to an approved request marks that request fulfilled.
+            </p>
+        </div>
+        <a class="btn-secondary" th:href="@{/admin/donors}"><i class="fa-solid fa-arrow-left"></i> Donors</a>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <section class="surface-card">
+        <div class="donor-summary">
+            <i class="fa-solid fa-circle-user"></i>
+            <div>
+                <strong th:text="${donor.fullName}">Donor name</strong>
+                <span>
+                    <span th:if="${donor.bloodGroup != null}" th:text="${donor.bloodGroup.displayName}">A+</span>
+                    <span th:if="${donor.bloodGroup == null}">Blood group not set</span>
+                    &middot;
+                    <span th:text="${donor.email}">donor@example.com</span>
+                </span>
+            </div>
+        </div>
+
+        <form th:action="@{/donations/record/{id}(id=${donor.id})}" th:object="${donationDto}" method="post">
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="donationDate">Donation date</label>
+                    <input id="donationDate" type="date" th:field="*{donationDate}">
+                    <span class="field-error" th:if="${#fields.hasErrors('donationDate')}" th:errors="*{donationDate}"></span>
+                </div>
+                <div class="form-field">
+                    <label for="unitsDonated">Units donated</label>
+                    <input id="unitsDonated" type="number" min="1" th:field="*{unitsDonated}">
+                    <span class="field-error" th:if="${#fields.hasErrors('unitsDonated')}" th:errors="*{unitsDonated}"></span>
+                </div>
+                <div class="form-field full">
+                    <label for="location">Collection location</label>
+                    <input id="location" type="text" th:field="*{location}" placeholder="e.g. Toronto General Hospital">
+                    <span class="field-error" th:if="${#fields.hasErrors('location')}" th:errors="*{location}"></span>
+                </div>
+                <div class="form-field full">
+                    <label for="linkedRequestId">Fulfils an approved request <small>(optional)</small></label>
+                    <select id="linkedRequestId" th:field="*{linkedRequestId}">
+                        <option value="">Not linked to a request</option>
+                        <option th:each="req : ${approvedRequests}" th:value="${req.id}"
+                                th:text="'#' + ${req.id} + ' - ' + ${req.requestedBloodGroup.displayName}
+                                         + ', ' + ${req.unitsNeeded} + ' unit(s) at ' + ${req.hospitalName}"></option>
+                    </select>
+                    <span class="field-error" th:if="${#fields.hasErrors('linkedRequestId')}" th:errors="*{linkedRequestId}"></span>
+                    <p class="field-hint" th:if="${#lists.isEmpty(approvedRequests)}">
+                        No approved requests are waiting. Approve one from the pending queue to link it here.
+                    </p>
+                </div>
+            </div>
+
+            <div class="inline-actions" style="margin-top: 24px;">
+                <button class="btn-primary" type="submit"><i class="fa-solid fa-droplet"></i> Record donation</button>
+                <a class="btn-secondary" th:href="@{/admin/donors}">Cancel</a>
+            </div>
+        </form>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -22,10 +22,8 @@
         </th:block>
 
         <!-- Show these links when user IS logged in -->
+        <!-- Profile is reached by clicking the welcome badge at the end of the bar. -->
         <th:block th:if="${user != null}">
-            <a th:href="@{/donor/profile}">
-                <i class="fa-solid fa-user"></i>Profile
-            </a>
             <a th:href="@{/requests/list}">
                 <i class="fa-solid fa-list"></i>My Requests
             </a>
@@ -51,14 +49,14 @@
             <i class="fa-solid fa-circle-info"></i>About Us
         </a>
 
-        <!-- Welcome message (only when logged in) -->
-        <span th:if="${user != null}" class="welcome-text">
+        <!-- Welcome badge doubles as the link to your own profile (only when logged in) -->
+        <a th:if="${user != null}" class="welcome-text" th:href="@{/donor/profile}" title="View my profile">
             <i class="fa-solid fa-circle-user"></i>
             <span class="welcome-copy">
                 <small>Welcome</small>
                 <strong th:text="${user.fullName}">John Doe</strong>
             </span>
-        </span>
+        </a>
     </div>
 </div>
 </html>

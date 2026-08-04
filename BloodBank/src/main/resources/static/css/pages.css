@@ -357,6 +357,38 @@ body > .footer {
     font-weight: 600;
 }
 
+.field-hint {
+    margin-top: 7px;
+    color: #999;
+    font-size: 13px;
+}
+
+/* Identifies whose record a form is being filled in on behalf of. */
+.donor-summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 26px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.donor-summary > i {
+    color: #d62929;
+    font-size: 34px;
+}
+
+.donor-summary strong {
+    display: block;
+    color: #222;
+    font-size: 17px;
+}
+
+.donor-summary span {
+    color: #888;
+    font-size: 14px;
+}
+
 /* ========== BAR CHARTS ========== */
 .blood-bars {
     display: flex;

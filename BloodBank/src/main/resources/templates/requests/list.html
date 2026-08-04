@@ -23,15 +23,15 @@
             </a>
         </div>
 
-        <table style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Outfit', sans-serif;">
+        <table class="simple-table" style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Outfit', sans-serif;">
             <thead>
             <tr style="border-bottom: 2px solid #ddd;">
-                <th style="padding: 12px 8px; color: #555;">Date</th>
-                <th style="padding: 12px 8px; color: #555;">Blood Group</th>
-                <th style="padding: 12px 8px; color: #555;">Units</th>
-                <th style="padding: 12px 8px; color: #555;">Hospital</th>
-                <th style="padding: 12px 8px; color: #555;">Urgency</th>
-                <th style="padding: 12px 8px; color: #555;">Status</th>
+                <th th:replace="~{fragments/sort :: sortable('Date', 'requestDate', ${sort}, ${dir}, '/requests/list')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Blood Group', 'requestedBloodGroup', ${sort}, ${dir}, '/requests/list')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Units', 'unitsNeeded', ${sort}, ${dir}, '/requests/list')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Hospital', 'hospitalName', ${sort}, ${dir}, '/requests/list')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Urgency', 'urgencyLevel', ${sort}, ${dir}, '/requests/list')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Status', 'status', ${sort}, ${dir}, '/requests/list')}"></th>
                 <th style="padding: 12px 8px; color: #555;">Action</th>
             </tr>
             </thead>

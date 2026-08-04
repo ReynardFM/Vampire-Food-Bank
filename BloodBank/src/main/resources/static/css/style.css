@@ -161,6 +161,69 @@ body,
     white-space: nowrap;
 }
 
+/*
+ * The welcome badge is an <a> to /donor/profile, which makes the generic ".right_nav a" rule
+ * above apply to it. That rule is more specific than ".welcome-text", so restate the pieces of
+ * the badge it would otherwise overwrite.
+ */
+.right_nav a.welcome-text {
+    padding: 7px 11px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .12);
+}
+
+.right_nav a.welcome-text:hover {
+    border-color: rgba(255, 255, 255, .5);
+    background: rgba(255, 255, 255, .22);
+}
+
+/* The 8px flex gap already spaces the avatar; the generic nav rule adds 10px on top. */
+.right_nav a.welcome-text i {
+    margin-right: 0;
+}
+
+/* ========== SORTABLE TABLE HEADERS ========== */
+/* Lives here rather than in pages.css so the inline-styled tables can use it too. */
+
+/*
+ * The request-list and donation-history tables carried this on every <th> as an inline style.
+ * The shared header fragment cannot reproduce inline styles, so it moved here.
+ */
+.simple-table th {
+    padding: 12px 8px;
+    color: #555;
+}
+
+.sortable-col a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: inherit;
+    text-decoration: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+.sortable-col a::after {
+    content: "\2195";
+    opacity: .3;
+    font-size: 11px;
+}
+
+.sortable-col a:hover {
+    color: #d62929;
+}
+
+.sortable-col a.sorted-asc::after {
+    content: "\2191";
+    opacity: 1;
+}
+
+.sortable-col a.sorted-desc::after {
+    content: "\2193";
+    opacity: 1;
+}
+
 /* ========== FORM CONTAINER (Shared Layout) ========== */
 .form_container {
     min-height: 75%;

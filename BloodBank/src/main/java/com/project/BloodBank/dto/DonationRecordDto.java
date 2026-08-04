@@ -1,12 +1,23 @@
 package com.project.BloodBank.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+
 import java.time.LocalDate;
 
 public class DonationRecordDto {
 
+    @NotNull(message = "Donation date is required")
+    @PastOrPresent(message = "Donation date cannot be in the future")
     private LocalDate donationDate;
+
+    @Min(value = 1, message = "At least one unit must be recorded")
     private int unitsDonated;
+
     private String location;
+
+    /** Optional. When set, the linked request is marked FULFILLED. */
     private Long linkedRequestId;
 
     public DonationRecordDto() {

@@ -8,6 +8,7 @@ import com.project.BloodBank.model.User;
 import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.Role;
 import com.project.BloodBank.repository.UserRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -65,8 +66,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<User> searchDonorsByBloodGroup(BloodGroup bloodGroup) {
-        return userRepository.findByBloodGroupAndActiveTrue(bloodGroup);
+    public List<User> searchDonorsByBloodGroup(BloodGroup bloodGroup, Sort sort) {
+        return userRepository.findByBloodGroupAndActiveTrue(bloodGroup, sort);
     }
 
     @Transactional(readOnly = true)
@@ -83,11 +84,22 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
 
+        // Nothing in the app can create or re-enable an administrator, so deactivating one is a
+        // one-way door. Enforced here rather than in the controller so it holds for every caller.
+        if (user.getRole() == Role.ADMIN) {
+            throw new IllegalStateException("Administrator accounts cannot be deactivated.");
+        }
+
         user.setActive(false);
         userRepository.save(user);
     }
 
-    public List<User> getAllActiveDonors() {
-        return userRepository.findAllByActiveTrue();
+    /**
+     * Every active account, administrators included. Safe to list them now that deactivateUser
+     * refuses ROLE_ADMIN outright, so an admin row can be shown without being a hazard.
+     */
+    @Transactional(readOnly = true)
+    public List<User> getAllActiveUsers(Sort sort) {
+        return userRepository.findAllByActiveTrue(sort);
     }
 }

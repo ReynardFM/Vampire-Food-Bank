@@ -8,6 +8,7 @@ import com.project.BloodBank.model.User;
 import com.project.BloodBank.model.enums.RequestStatus;
 import com.project.BloodBank.repository.DonationRepository;
 import com.project.BloodBank.repository.UserRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,8 +61,8 @@ public class DonationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Donation> getDonationHistory(User donor) {
-        return donationRepository.findByDonorOrderByDonationDateDesc(donor);
+    public List<Donation> getDonationHistory(User donor, Sort sort) {
+        return donationRepository.findByDonor(donor, sort);
     }
 
     @Transactional(readOnly = true)

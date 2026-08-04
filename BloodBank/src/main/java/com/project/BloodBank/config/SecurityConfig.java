@@ -38,7 +38,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/home", "/about-us", "/login", "/register",
                                 "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
-                        .requestMatchers("/admin/**", "/dashboard", "/dashboard/**")
+                        // Donations are entered by staff on a donor's behalf, so recording is
+                        // admin-only even though /donations/** is otherwise a member area.
+                        .requestMatchers("/admin/**", "/dashboard", "/dashboard/**",
+                                "/donations/record/**")
                         .hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/donor/**", "/requests/**", "/donations/**").authenticated()
                         .anyRequest().authenticated()

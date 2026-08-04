@@ -55,12 +55,12 @@
         <div class="login_panel" style="flex: 2; min-width: 400px; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 30px;">
             <h2 style="margin-bottom: 20px; font-size: 24px;"><i class="fa-solid fa-clock-rotate-left" style="color: #d62929; margin-right: 10px;"></i>Donation History</h2>
 
-            <table style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Outfit', sans-serif;">
+            <table class="simple-table" style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Outfit', sans-serif;">
                 <thead>
                 <tr style="border-bottom: 2px solid #ddd;">
-                    <th style="padding: 12px 8px; color: #555;">Date</th>
-                    <th style="padding: 12px 8px; color: #555;">Location</th>
-                    <th style="padding: 12px 8px; color: #555;">Units Donated</th>
+                    <th th:replace="~{fragments/sort :: sortable('Date', 'donationDate', ${sort}, ${dir}, '/donor/profile')}"></th>
+                    <th th:replace="~{fragments/sort :: sortable('Location', 'location', ${sort}, ${dir}, '/donor/profile')}"></th>
+                    <th th:replace="~{fragments/sort :: sortable('Units Donated', 'unitsDonated', ${sort}, ${dir}, '/donor/profile')}"></th>
                 </tr>
                 </thead>
                 <tbody>
