@@ -19,9 +19,17 @@
             <h1>All Requests</h1>
             <p>Every request and how it was decided, including the ones no longer in the pending queue.</p>
         </div>
-        <a class="btn-primary" th:href="@{/admin/pending}">
-            <i class="fa-solid fa-clock"></i> Pending queue
-        </a>
+        <!-- Dashboard first, matching the pending queue and the account list: this page is reached
+             from the dashboard, so the way back has to be here too. Pending queue stays as the
+             onward step. -->
+        <div class="inline-actions">
+            <a class="btn-secondary" th:href="@{/dashboard}">
+                <i class="fa-solid fa-arrow-left"></i> Dashboard
+            </a>
+            <a class="btn-primary" th:href="@{/admin/pending}">
+                <i class="fa-solid fa-clock"></i> Pending queue
+            </a>
+        </div>
     </div>
 
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
