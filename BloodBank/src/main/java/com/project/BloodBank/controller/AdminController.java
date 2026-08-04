@@ -23,10 +23,13 @@ public class AdminController {
 
     private final DonationRequestService requestService;
     private final UserService userService;
+    private final PageSupport pageSupport;
 
-    public AdminController(DonationRequestService requestService, UserService userService) {
+    public AdminController(DonationRequestService requestService, UserService userService,
+                           PageSupport pageSupport) {
         this.requestService = requestService;
         this.userService = userService;
+        this.pageSupport = pageSupport;
     }
 
     /**
@@ -51,20 +54,17 @@ public class AdminController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        String requested = REQUEST_SORT_FIELDS.containsKey(sort) ? sort : "requestDate";
-        String property = REQUEST_SORT_FIELDS.get(requested);
-        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        SortRequest sorting = SortRequest.of(
+                REQUEST_SORT_FIELDS, sort, dir, "requestDate", Sort.Direction.DESC);
 
         try {
             Page<DonationRequest> pendingRequests = requestService.getPendingRequests(
-                    PageSupport.of(page, Sort.by(direction, property)));
+                    pageSupport.of(page, sorting.toSort()));
             model.addAttribute("requests", pendingRequests.getContent());
             model.addAttribute("page", pendingRequests);
             // Lets the view flag rows that arrived today without doing date maths in Thymeleaf.
             model.addAttribute("today", LocalDate.now());
-            // The URL-facing name, so the header links stay readable and match what was clicked.
-            model.addAttribute("sort", requested);
-            model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
+            sorting.applyTo(model);
             return "admin/pending-requests";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Failed to load pending requests.");
@@ -133,15 +133,14 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             Model model) {
 
-        String requested = REQUEST_SORT_FIELDS.containsKey(sort) ? sort : "requestDate";
-        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        SortRequest sorting = SortRequest.of(
+                REQUEST_SORT_FIELDS, sort, dir, "requestDate", Sort.Direction.DESC);
 
         Page<DonationRequest> requests = requestService.getAllRequests(
-                PageSupport.of(page, Sort.by(direction, REQUEST_SORT_FIELDS.get(requested))));
+                pageSupport.of(page, sorting.toSort()));
         model.addAttribute("requests", requests.getContent());
         model.addAttribute("page", requests);
-        model.addAttribute("sort", requested);
-        model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
+        sorting.applyTo(model);
         return "admin/request-list";
     }
 
@@ -152,16 +151,14 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             Model model) {
 
-        String property = DONOR_SORT_FIELDS.contains(sort) ? sort : "fullName";
-        Sort.Direction direction = "desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        SortRequest sorting = SortRequest.of(
+                DONOR_SORT_FIELDS, sort, dir, "fullName", Sort.Direction.ASC);
 
         Page<User> donors = userService.getAllActiveUsers(
-                PageSupport.of(page, Sort.by(direction, property)));
+                pageSupport.of(page, sorting.toSort()));
         model.addAttribute("donors", donors.getContent());
         model.addAttribute("page", donors);
-        // Echoed back so the headers know which one is active and which way to flip next.
-        model.addAttribute("sort", property);
-        model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
+        sorting.applyTo(model);
         return "admin/donor-list";
     }
 

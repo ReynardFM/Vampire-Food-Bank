@@ -24,10 +24,13 @@ public class DonationRequestController {
 
     private final DonationRequestService requestService;
     private final UserService userService;
+    private final PageSupport pageSupport;
 
-    public DonationRequestController(DonationRequestService requestService, UserService userService) {
+    public DonationRequestController(DonationRequestService requestService, UserService userService,
+                                     PageSupport pageSupport) {
         this.requestService = requestService;
         this.userService = userService;
+        this.pageSupport = pageSupport;
     }
 
     @GetMapping("/create")
@@ -83,16 +86,15 @@ public class DonationRequestController {
             @RequestParam(defaultValue = "0") int page,
             Model model) {
 
-        String requested = LIST_SORT_FIELDS.containsKey(sort) ? sort : "requestDate";
-        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        SortRequest sorting = SortRequest.of(
+                LIST_SORT_FIELDS, sort, dir, "requestDate", Sort.Direction.DESC);
 
         User currentUser = userService.getCurrentUser();
         Page<DonationRequest> requests = requestService.getRequestsByUser(currentUser,
-                PageSupport.of(page, Sort.by(direction, LIST_SORT_FIELDS.get(requested))));
+                pageSupport.of(page, sorting.toSort()));
         model.addAttribute("requests", requests.getContent());
         model.addAttribute("page", requests);
-        model.addAttribute("sort", requested);
-        model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
+        sorting.applyTo(model);
         return "requests/list";
     }
 

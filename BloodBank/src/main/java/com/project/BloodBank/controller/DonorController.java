@@ -31,12 +31,14 @@ public class DonorController {
     private final UserService userService;
     private final DonationService donationService;
     private final DonationRequestService requestService;
+    private final PageSupport pageSupport;
 
     public DonorController(UserService userService, DonationService donationService,
-                           DonationRequestService requestService) {
+                           DonationRequestService requestService, PageSupport pageSupport) {
         this.userService = userService;
         this.donationService = donationService;
         this.requestService = requestService;
+        this.pageSupport = pageSupport;
     }
 
     @ModelAttribute("bloodGroups")
@@ -73,17 +75,16 @@ public class DonorController {
             @RequestParam(defaultValue = "0") int page,
             Model model) {
 
-        String property = HISTORY_SORT_FIELDS.contains(sort) ? sort : "donationDate";
-        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        SortRequest sorting = SortRequest.of(
+                HISTORY_SORT_FIELDS, sort, dir, "donationDate", Sort.Direction.DESC);
 
         User currentUser = userService.getCurrentUser();
         Page<Donation> donations = donationService.getDonationHistory(currentUser,
-                PageSupport.of(page, Sort.by(direction, property)));
+                pageSupport.of(page, sorting.toSort()));
         model.addAttribute("user", currentUser);
         model.addAttribute("donations", donations.getContent());
         model.addAttribute("page", donations);
-        model.addAttribute("sort", property);
-        model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
+        sorting.applyTo(model);
         return "donor/profile";
     }
 
@@ -186,19 +187,17 @@ public class DonorController {
         Set<String> allowed = isAdmin
                 ? SEARCH_SORT_FIELDS_ADMIN
                 : SEARCH_SORT_FIELDS_MEMBER;
-        String property = allowed.contains(sort) ? sort : "fullName";
-        Sort.Direction direction = "desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        SortRequest sorting = SortRequest.of(allowed, sort, dir, "fullName", Sort.Direction.ASC);
 
         if (bloodGroup != null) {
             Page<User> results = userService.searchCompatibleDonors(bloodGroup,
-                    PageSupport.of(page, Sort.by(direction, property)));
+                    pageSupport.of(page, sorting.toSort()));
             model.addAttribute("results", results.getContent());
             model.addAttribute("page", results);
             model.addAttribute("selectedBloodGroup", bloodGroup);
         }
 
-        model.addAttribute("sort", property);
-        model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
+        sorting.applyTo(model);
         return "donor/search";
     }
 }

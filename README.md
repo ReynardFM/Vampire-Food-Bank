@@ -62,6 +62,14 @@ bloodbank.seed.admin-email=you@example.com
 bloodbank.seed.admin-password=your-password
 ```
 
+## Other settings
+
+Every listing shows 10 rows per page. To change that, set:
+
+```properties
+bloodbank.page-size=25
+```
+
 ## What you can do
 
 **As a donor** — complete your profile, search for donors who can give to a particular blood
