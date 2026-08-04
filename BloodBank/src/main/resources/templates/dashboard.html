@@ -43,35 +43,63 @@
             <strong th:text="${pendingRequests}">0</strong>
             <span>Requests awaiting review</span>
         </article>
+        <!-- Accented on purpose: this is the only card that changes hour to hour. -->
+        <article class="stat-card is-today">
+            <i class="fa-solid fa-bolt"></i>
+            <strong th:text="${requestsRaisedToday + requestsDecidedToday}">0</strong>
+            <span>Request activity today</span>
+            <small class="stat-breakdown">
+                <span th:text="${requestsRaisedToday} + ' raised'">0 raised</span>
+                &middot;
+                <span th:text="${requestsDecidedToday} + ' decided'">0 decided</span>
+            </small>
+        </article>
     </section>
 
     <div class="split-layout" style="margin-top: 24px;">
         <section class="surface-card">
             <h2 class="section-title">Donations by blood group</h2>
+            <p class="chart-legend">
+                <span class="legend-swatch legend-earlier"></span> earlier
+                <span class="legend-swatch legend-today"></span> today
+            </p>
             <div class="blood-bars">
-                <div class="blood-row" th:each="group : ${bloodGroups}">
-                    <strong th:text="${group.displayName}">A+</strong>
+                <div class="blood-row" th:each="bar : ${bloodGroupBars}">
+                    <strong th:text="${bar.label}">A+</strong>
                     <div class="bar-track">
-                        <div class="bar-fill"
-                             th:style="${'width:' + (donationsByBloodGroup.get(group) != null ? donationsByBloodGroup.get(group) * 10 : 0) + '%'}"></div>
+                        <div class="bar-fill bar-blood" th:if="${bar.earlierPercent > 0}"
+                             th:style="'width:' + ${bar.earlierPercent} + '%'"></div>
+                        <div class="bar-fill bar-blood bar-today" th:if="${bar.todayPercent > 0}"
+                             th:style="'width:' + ${bar.todayPercent} + '%'"
+                             th:title="${bar.today} + ' recorded today'"></div>
                     </div>
-                    <span th:text="${donationsByBloodGroup.get(group) != null ? donationsByBloodGroup.get(group) : 0}">0</span>
+                    <span th:text="${bar.total}">0</span>
                 </div>
             </div>
         </section>
 
         <section class="surface-card">
             <h2 class="section-title">Request status</h2>
+            <p class="chart-legend">
+                <span class="legend-swatch legend-earlier"></span> earlier
+                <span class="legend-swatch legend-today"></span> today
+            </p>
             <div class="blood-bars">
-                <div class="blood-row" th:each="status : ${requestStatuses}">
-                    <span class="badge"
-                          th:classappend="${'badge-' + #strings.toLowerCase(status.name())}"
-                          th:text="${status}">PENDING</span>
+                <div class="blood-row" th:each="bar : ${statusBars}">
+                    <span class="badge" th:classappend="'badge-' + ${bar.key}"
+                          th:text="${bar.label}">PENDING</span>
                     <div class="bar-track">
-                        <div class="bar-fill"
-                             th:style="${'width:' + (requestStatusCounts.get(status) != null ? requestStatusCounts.get(status) * 10 : 0) + '%'}"></div>
+                        <!-- Two segments side by side: what was already in this status, then what
+                             moved into it today. Widths are clamped in ChartBar. -->
+                        <div class="bar-fill" th:classappend="'bar-' + ${bar.key}"
+                             th:if="${bar.earlierPercent > 0}"
+                             th:style="'width:' + ${bar.earlierPercent} + '%'"></div>
+                        <div class="bar-fill bar-today" th:classappend="'bar-' + ${bar.key}"
+                             th:if="${bar.todayPercent > 0}"
+                             th:style="'width:' + ${bar.todayPercent} + '%'"
+                             th:title="${bar.today} + ' today'"></div>
                     </div>
-                    <span th:text="${requestStatusCounts.get(status) != null ? requestStatusCounts.get(status) : 0}">0</span>
+                    <span th:text="${bar.total}">0</span>
                 </div>
             </div>
             <div class="inline-actions" style="margin-top: 24px;">

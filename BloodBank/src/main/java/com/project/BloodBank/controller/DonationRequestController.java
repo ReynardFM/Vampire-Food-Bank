@@ -8,6 +8,7 @@ import com.project.BloodBank.model.enums.UrgencyLevel;
 import com.project.BloodBank.service.DonationRequestService;
 import com.project.BloodBank.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -79,22 +80,40 @@ public class DonationRequestController {
     public String listRequests(
             @RequestParam(defaultValue = "requestDate") String sort,
             @RequestParam(defaultValue = "desc") String dir,
+            @RequestParam(defaultValue = "0") int page,
             Model model) {
 
         String requested = LIST_SORT_FIELDS.containsKey(sort) ? sort : "requestDate";
         Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
         User currentUser = userService.getCurrentUser();
-        model.addAttribute("requests", requestService.getRequestsByUser(
-                currentUser, Sort.by(direction, LIST_SORT_FIELDS.get(requested))));
+        Page<DonationRequest> requests = requestService.getRequestsByUser(currentUser,
+                PageSupport.of(page, Sort.by(direction, LIST_SORT_FIELDS.get(requested))));
+        model.addAttribute("requests", requests.getContent());
+        model.addAttribute("page", requests);
         model.addAttribute("sort", requested);
         model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
         return "requests/list";
     }
 
+    private record ReturnTarget(String url, String label) {
+    }
+
+    private static final ReturnTarget MY_REQUESTS =
+            new ReturnTarget("/requests/list", "Back to my requests");
+
+    /**
+     * Where "Back" goes on the detail page. Keyed by a short token rather than taking a URL from
+     * the query string, so this cannot be turned into an open redirect.
+     */
+    private static final Map<String, ReturnTarget> RETURN_TARGETS = Map.of(
+            "pending", new ReturnTarget("/admin/pending", "Back to pending queue"),
+            "all", new ReturnTarget("/admin/requests", "Back to all requests"));
+
     @GetMapping("/{id}")
     public String viewRequest(
             @PathVariable Long id,
+            @RequestParam(required = false) String from,
             Model model,
             RedirectAttributes redirectAttributes) {
 
@@ -102,14 +121,22 @@ public class DonationRequestController {
             User currentUser = userService.getCurrentUser();
             DonationRequest request = requestService.getRequestById(id);
 
+            boolean isAdmin = currentUser.getRole().name().equals("ADMIN");
+
             // Security check: only owner or admin can view
-            if (!request.getRequestedBy().getId().equals(currentUser.getId()) &&
-                    !currentUser.getRole().name().equals("ADMIN")) {
+            if (!request.getRequestedBy().getId().equals(currentUser.getId()) && !isAdmin) {
                 redirectAttributes.addFlashAttribute("error", "You don't have permission to view this request.");
                 return "redirect:/requests/list";
             }
 
+            // The admin targets are ignored for donors, who would only get a 403 there.
+            ReturnTarget back = isAdmin && from != null
+                    ? RETURN_TARGETS.getOrDefault(from, MY_REQUESTS)
+                    : MY_REQUESTS;
+
             model.addAttribute("request", request);
+            model.addAttribute("backUrl", back.url());
+            model.addAttribute("backLabel", back.label());
             return "requests/detail";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Request not found.");

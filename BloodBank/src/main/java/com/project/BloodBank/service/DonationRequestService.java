@@ -6,10 +6,12 @@ import com.project.BloodBank.model.DonationRequest;
 import com.project.BloodBank.model.User;
 import com.project.BloodBank.model.enums.RequestStatus;
 import com.project.BloodBank.repository.DonationRequestRepository;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -36,19 +38,19 @@ public class DonationRequestService {
     }
 
     @Transactional(readOnly = true)
-    public List<DonationRequest> getRequestsByUser(User user, Sort sort) {
-        return donationRequestRepository.findByRequestedBy(user, sort);
+    public Page<DonationRequest> getRequestsByUser(User user, Pageable pageable) {
+        return donationRequestRepository.findByRequestedBy(user, pageable);
     }
 
     @Transactional(readOnly = true)
-    public List<DonationRequest> getPendingRequests(Sort sort) {
-        return donationRequestRepository.findByStatus(RequestStatus.PENDING, sort);
+    public Page<DonationRequest> getPendingRequests(Pageable pageable) {
+        return donationRequestRepository.findByStatus(RequestStatus.PENDING, pageable);
     }
 
     /** Every request regardless of status; the pending queue only ever shows PENDING. */
     @Transactional(readOnly = true)
-    public List<DonationRequest> getAllRequests(Sort sort) {
-        return donationRequestRepository.findAll(sort);
+    public Page<DonationRequest> getAllRequests(Pageable pageable) {
+        return donationRequestRepository.findAll(pageable);
     }
 
     /** Approved requests are the only ones a donation may be linked to. */
@@ -72,6 +74,7 @@ public class DonationRequestService {
         }
 
         request.setStatus(RequestStatus.APPROVED);
+        request.setDecidedAt(LocalDateTime.now());
         return donationRequestRepository.save(request);
     }
 
@@ -84,6 +87,7 @@ public class DonationRequestService {
         }
 
         request.setStatus(RequestStatus.REJECTED);
+        request.setDecidedAt(LocalDateTime.now());
         return donationRequestRepository.save(request);
     }
 
@@ -91,6 +95,9 @@ public class DonationRequestService {
     public DonationRequest markAsFulfilled(Long id) {
         DonationRequest request = getRequestById(id);
         request.setStatus(RequestStatus.FULFILLED);
+        // decidedAt tracks the last move away from PENDING, so fulfilment updates it too.
+        // Without this the dashboard could not tell what was fulfilled today.
+        request.setDecidedAt(LocalDateTime.now());
         return donationRequestRepository.save(request);
     }
 }

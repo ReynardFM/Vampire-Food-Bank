@@ -43,20 +43,36 @@ body,
     gap: 2px;
     min-width: 0;
     font-family: "Outfit", sans-serif;
+    /*
+     * Wrapping at every width, not just below 900px. Every child is flex:0 0 auto, so without
+     * this an administrator's longer set of links could neither wrap nor shrink and spilled
+     * leftwards over the logo and brand text.
+     */
+    flex-wrap: wrap;
 }
 
 .brand {
     flex-direction: column;
 }
 
+/* 27px rather than 30px: the admin nav carries two extra links, and at that size the
+   right-hand items ran into the brand text. */
 .brand h2 {
-    font: 900 30px/1 "Dela Gothic One", sans-serif;
+    font: 900 27px/1 "Dela Gothic One", sans-serif;
 }
 
 .brand span {
     margin-top: 4px;
     opacity: .8;
     font: 400 14px "IBM Plex Mono", sans-serif;
+}
+
+/* The logo is a link to the home page. line-height:0 stops the inline image adding
+   stray space below it inside the anchor. */
+.logo-link {
+    display: inline-flex;
+    flex: 0 0 auto;
+    line-height: 0;
 }
 
 .left_nav img {
@@ -180,6 +196,37 @@ body,
 /* The 8px flex gap already spaces the avatar; the generic nav rule adds 10px on top. */
 .right_nav a.welcome-text i {
     margin-right: 0;
+}
+
+/* ========== PAGINATION ========== */
+/* In style.css rather than pages.css so the inline-styled listings can use it too. */
+.pager {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+    font-family: "Outfit", sans-serif;
+}
+
+.pager-status {
+    color: #777;
+    font-size: 14px;
+}
+
+.pager-status strong {
+    color: #222;
+}
+
+.pager-status small {
+    color: #999;
+}
+
+/* Keeps "Page x of y" centred when only one of the two buttons is showing. */
+.pager-spacer {
+    flex: 0 0 auto;
+    width: 1px;
 }
 
 /* ========== SORTABLE TABLE HEADERS ========== */

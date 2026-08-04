@@ -65,8 +65,8 @@
         </div>
 
         <div style="display: flex; justify-content: flex-start; gap: 15px;">
-            <a th:href="@{/requests/list}" style="padding: 12px 25px; background: #e9ecef; color: #333; border-radius: 45px; text-decoration: none; font-weight: 600;">
-                <i class="fa-solid fa-arrow-left"></i> Back to List
+            <a th:href="@{${backUrl}}" style="padding: 12px 25px; background: #e9ecef; color: #333; border-radius: 45px; text-decoration: none; font-weight: 600;">
+                <i class="fa-solid fa-arrow-left"></i> <span th:text="${backLabel}">Back to List</span>
             </a>
         </div>
 

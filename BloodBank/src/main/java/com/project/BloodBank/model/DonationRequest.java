@@ -63,6 +63,15 @@ public class DonationRequest {
     )
     private LocalDateTime requestDate;
 
+    /**
+     * When the request was approved or rejected. Null while it is still pending.
+     *
+     * requestDate only says when a request arrived, so without this there is no way to tell what
+     * an administrator actually acted on today.
+     */
+    @Column
+    private LocalDateTime decidedAt;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -182,6 +191,14 @@ public class DonationRequest {
 
     public void setRequestDate(LocalDateTime requestDate) {
         this.requestDate = requestDate;
+    }
+
+    public LocalDateTime getDecidedAt() {
+        return decidedAt;
+    }
+
+    public void setDecidedAt(LocalDateTime decidedAt) {
+        this.decidedAt = decidedAt;
     }
 
     public String getNotes() {

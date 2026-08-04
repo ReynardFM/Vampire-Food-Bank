@@ -215,7 +215,14 @@ public class DatabaseSeeder implements CommandLineRunner {
             request.setUrgencyLevel(seed.urgency());
             request.setStatus(seed.status());
             // @PrePersist only fills this when null, so the explicit date survives.
-            request.setRequestDate(LocalDateTime.now().minusDays(seed.daysAgo()).withHour(9));
+            LocalDateTime raisedAt = LocalDateTime.now().minusDays(seed.daysAgo()).withHour(9);
+            request.setRequestDate(raisedAt);
+            // Anything already decided needs a decision time, or the history reads as though it
+            // resolved itself. Deliberately backdated so "decided today" starts at zero and only
+            // moves when an administrator actually acts.
+            if (seed.status() != RequestStatus.PENDING) {
+                request.setDecidedAt(raisedAt.plusHours(6));
+            }
             request.setNotes(seed.notes());
             saved.add(requestRepository.save(request));
         }

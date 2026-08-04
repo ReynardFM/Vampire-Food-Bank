@@ -8,7 +8,8 @@ import com.project.BloodBank.model.User;
 import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.Role;
 import com.project.BloodBank.repository.UserRepository;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -66,8 +67,12 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<User> searchDonorsByBloodGroup(BloodGroup bloodGroup, Sort sort) {
-        return userRepository.findByBloodGroupAndActiveTrue(bloodGroup, sort);
+    /**
+     * Everyone who could give blood to a patient of {@code recipientGroup}, not just people with
+     * the identical group. See {@link BloodGroup#compatibleDonors()}.
+     */
+    public Page<User> searchCompatibleDonors(BloodGroup recipientGroup, Pageable pageable) {
+        return userRepository.findByBloodGroupInAndActiveTrue(recipientGroup.compatibleDonors(), pageable);
     }
 
     @Transactional(readOnly = true)
@@ -99,7 +104,7 @@ public class UserService {
      * refuses ROLE_ADMIN outright, so an admin row can be shown without being a hazard.
      */
     @Transactional(readOnly = true)
-    public List<User> getAllActiveUsers(Sort sort) {
-        return userRepository.findAllByActiveTrue(sort);
+    public Page<User> getAllActiveUsers(Pageable pageable) {
+        return userRepository.findAllByActiveTrue(pageable);
     }
 }

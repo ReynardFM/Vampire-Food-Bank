@@ -2,14 +2,17 @@ package com.project.BloodBank.controller;
 
 import com.project.BloodBank.model.DonationRequest;
 import com.project.BloodBank.model.User;
+import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.service.DonationRequestService;
 import com.project.BloodBank.service.UserService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +47,7 @@ public class AdminController {
     public String viewPendingRequests(
             @RequestParam(defaultValue = "requestDate") String sort,
             @RequestParam(defaultValue = "desc") String dir,
+            @RequestParam(defaultValue = "0") int page,
             Model model,
             RedirectAttributes redirectAttributes) {
 
@@ -52,9 +56,12 @@ public class AdminController {
         Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
         try {
-            List<DonationRequest> pendingRequests =
-                    requestService.getPendingRequests(Sort.by(direction, property));
-            model.addAttribute("requests", pendingRequests);
+            Page<DonationRequest> pendingRequests = requestService.getPendingRequests(
+                    PageSupport.of(page, Sort.by(direction, property)));
+            model.addAttribute("requests", pendingRequests.getContent());
+            model.addAttribute("page", pendingRequests);
+            // Lets the view flag rows that arrived today without doing date maths in Thymeleaf.
+            model.addAttribute("today", LocalDate.now());
             // The URL-facing name, so the header links stay readable and match what was clicked.
             model.addAttribute("sort", requested);
             model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
@@ -71,8 +78,19 @@ public class AdminController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            requestService.approveRequest(id);
-            redirectAttributes.addFlashAttribute("success", "Request approved successfully!");
+            DonationRequest approved = requestService.approveRequest(id);
+            BloodGroup needed = approved.getRequestedBloodGroup();
+
+            // Approving is almost always followed by "so who can actually give?", so go straight
+            // there with the group already filled in instead of sending the admin back to the
+            // queue to navigate across by hand.
+            redirectAttributes.addFlashAttribute("success",
+                    "Request approved. Showing donors who can give to " + needed.getDisplayName() + ".");
+            redirectAttributes.addAttribute("bloodGroup", needed);
+            // Carried so the search page knows which request is being fulfilled, and can hand it
+            // on to the donation form. The request staying APPROVED is what makes this resumable.
+            redirectAttributes.addAttribute("requestId", approved.getId());
+            return "redirect:/donor/search";
         } catch (IllegalStateException e) {
             redirectAttributes.addFlashAttribute("error", "Request is no longer pending.");
         } catch (Exception e) {
@@ -112,13 +130,16 @@ public class AdminController {
     public String listAllRequests(
             @RequestParam(defaultValue = "requestDate") String sort,
             @RequestParam(defaultValue = "desc") String dir,
+            @RequestParam(defaultValue = "0") int page,
             Model model) {
 
         String requested = REQUEST_SORT_FIELDS.containsKey(sort) ? sort : "requestDate";
         Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
-        model.addAttribute("requests",
-                requestService.getAllRequests(Sort.by(direction, REQUEST_SORT_FIELDS.get(requested))));
+        Page<DonationRequest> requests = requestService.getAllRequests(
+                PageSupport.of(page, Sort.by(direction, REQUEST_SORT_FIELDS.get(requested))));
+        model.addAttribute("requests", requests.getContent());
+        model.addAttribute("page", requests);
         model.addAttribute("sort", requested);
         model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");
         return "admin/request-list";
@@ -128,12 +149,16 @@ public class AdminController {
     public String listDonors(
             @RequestParam(defaultValue = "fullName") String sort,
             @RequestParam(defaultValue = "asc") String dir,
+            @RequestParam(defaultValue = "0") int page,
             Model model) {
 
         String property = DONOR_SORT_FIELDS.contains(sort) ? sort : "fullName";
         Sort.Direction direction = "desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC;
 
-        model.addAttribute("donors", userService.getAllActiveUsers(Sort.by(direction, property)));
+        Page<User> donors = userService.getAllActiveUsers(
+                PageSupport.of(page, Sort.by(direction, property)));
+        model.addAttribute("donors", donors.getContent());
+        model.addAttribute("page", donors);
         // Echoed back so the headers know which one is active and which way to flip next.
         model.addAttribute("sort", property);
         model.addAttribute("dir", direction.isAscending() ? "asc" : "desc");

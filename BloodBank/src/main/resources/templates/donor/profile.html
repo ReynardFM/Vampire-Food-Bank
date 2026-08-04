@@ -81,6 +81,8 @@
                 </tr>
                 </tbody>
             </table>
+
+            <nav th:replace="~{fragments/pagination :: pager(${page}, ${sort}, ${dir}, '/donor/profile')}"></nav>
         </div>
     </div>
 </div>

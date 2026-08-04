@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Page controls for a listing.
+
+    page - the Spring Data Page the controller put in the model
+    sort - the current URL-facing sort name
+    dir  - the current direction, "asc" or "desc"
+    url  - the listing's own path, e.g. '/admin/donors'
+
+  Renders nothing when everything fits on one page. Sort and direction are carried through so
+  paging does not silently reset the ordering.
+-->
+<nav th:fragment="pager(page, sort, dir, url)" class="pager" th:if="${page != null and page.totalPages > 1}">
+    <a class="btn-secondary" th:if="${!page.first}"
+       th:href="@{${url}(page=${page.number - 1}, sort=${sort}, dir=${dir})}">
+        <i class="fa-solid fa-arrow-left"></i> Previous
+    </a>
+    <span th:unless="${!page.first}" class="pager-spacer"></span>
+
+    <span class="pager-status">
+        Page <strong th:text="${page.number + 1}">1</strong>
+        of <strong th:text="${page.totalPages}">3</strong>
+        <small th:text="'· ' + ${page.totalElements} + ' in total'">· 27 in total</small>
+    </span>
+
+    <a class="btn-secondary" th:if="${!page.last}"
+       th:href="@{${url}(page=${page.number + 1}, sort=${sort}, dir=${dir})}">
+        Next <i class="fa-solid fa-arrow-right"></i>
+    </a>
+    <span th:unless="${!page.last}" class="pager-spacer"></span>
+</nav>
+
+<!-- As above, but keeps the donor search's bloodGroup filter in the link. -->
+<nav th:fragment="pagerFiltered(page, sort, dir, url, bloodGroup)" class="pager"
+     th:if="${page != null and page.totalPages > 1}">
+    <a class="btn-secondary" th:if="${!page.first}"
+       th:href="@{${url}(bloodGroup=${bloodGroup}, page=${page.number - 1}, sort=${sort}, dir=${dir})}">
+        <i class="fa-solid fa-arrow-left"></i> Previous
+    </a>
+    <span th:unless="${!page.first}" class="pager-spacer"></span>
+
+    <span class="pager-status">
+        Page <strong th:text="${page.number + 1}">1</strong>
+        of <strong th:text="${page.totalPages}">3</strong>
+        <small th:text="'· ' + ${page.totalElements} + ' in total'">· 27 in total</small>
+    </span>
+
+    <a class="btn-secondary" th:if="${!page.last}"
+       th:href="@{${url}(bloodGroup=${bloodGroup}, page=${page.number + 1}, sort=${sort}, dir=${dir})}">
+        Next <i class="fa-solid fa-arrow-right"></i>
+    </a>
+    <span th:unless="${!page.last}" class="pager-spacer"></span>
+</nav>
+
+</body>
+</html>

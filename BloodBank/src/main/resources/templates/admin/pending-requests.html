@@ -45,7 +45,11 @@
                 </td>
             </tr>
             <tr th:each="request : ${requests}">
-                <td th:text="${#temporals.format(request.requestDate, 'MMM d, yyyy')}">Jul 28, 2026</td>
+                <td>
+                    <span th:text="${#temporals.format(request.requestDate, 'MMM d, yyyy')}">Jul 28, 2026</span>
+                    <span class="badge badge-today"
+                          th:if="${today != null and request.requestDate.toLocalDate().isEqual(today)}">Today</span>
+                </td>
                 <td th:text="${request.requestedBy.fullName}">Donor</td>
                 <td><span class="badge badge-blood" th:text="${request.requestedBloodGroup.displayName}">A+</span></td>
                 <td th:text="${request.unitsNeeded}">1</td>
@@ -56,7 +60,7 @@
                 <td th:text="${request.urgencyLevel}">HIGH</td>
                 <td>
                     <div class="inline-actions">
-                        <a class="btn-secondary" th:href="@{/requests/{id}(id=${request.id})}">View</a>
+                        <a class="btn-secondary" th:href="@{/requests/{id}(id=${request.id}, from='pending')}">View</a>
                         <form th:action="@{/admin/approve/{id}(id=${request.id})}" method="post">
                             <button class="btn-success" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
                         </form>
@@ -69,6 +73,8 @@
             </tbody>
         </table>
     </section>
+
+    <nav th:replace="~{fragments/pagination :: pager(${page}, ${sort}, ${dir}, '/admin/pending')}"></nav>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

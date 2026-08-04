@@ -17,15 +17,50 @@
         <div>
             <div class="eyebrow">Donor directory</div>
             <h1>Find Compatible Donors</h1>
-            <p>Filter the active donor directory by blood group to locate potential matches.</p>
+            <p>
+                Choose the blood group the <strong>patient needs</strong>. Results include everyone
+                whose blood is safe to give them, not only exact matches.
+            </p>
         </div>
+        <a class="btn-secondary" th:if="${user != null and user.role.name() == 'ADMIN'}"
+           th:href="@{/admin/pending}">
+            <i class="fa-solid fa-clock"></i> Pending queue
+        </a>
     </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <!-- Shown while fulfilling a specific approved request. It disappears on its own once the
+         request is fulfilled, because the controller only sets this for APPROVED requests. -->
+    <section class="surface-card fulfilling-banner" th:if="${fulfillingRequest != null}">
+        <div>
+            <div class="eyebrow">Fulfilling request</div>
+            <strong>
+                #<span th:text="${fulfillingRequest.id}">12</span>
+                &middot;
+                <span th:text="${fulfillingRequest.requestedBloodGroup.displayName}">A+</span>
+                &middot;
+                <span th:text="${fulfillingRequest.unitsNeeded}">2</span> unit(s)
+                for <span th:text="${fulfillingRequest.requestedBy.fullName}">Jane Doe</span>
+            </strong>
+            <span th:text="${fulfillingRequest.hospitalName}">Toronto General Hospital</span>
+        </div>
+        <div class="inline-actions">
+            <a class="btn-secondary" th:href="@{/requests/{id}(id=${fulfillingRequest.id}, from='all')}">
+                View request
+            </a>
+            <a class="btn-secondary" th:href="@{/donor/search(bloodGroup=${selectedBloodGroup})}">
+                <i class="fa-solid fa-xmark"></i> Leave for later
+            </a>
+        </div>
+    </section>
 
     <section class="surface-card" style="margin-bottom: 24px;">
         <form th:action="@{/donor/search}" method="get">
             <div class="form-grid">
                 <div class="form-field">
-                    <label for="bloodGroup">Blood group</label>
+                    <label for="bloodGroup">Blood group needed</label>
                     <select id="bloodGroup" name="bloodGroup" required>
                         <option value="">Choose a blood group</option>
                         <option th:each="group : ${bloodGroups}" th:value="${group}" th:text="${group.displayName}"
@@ -40,29 +75,69 @@
     </section>
 
     <section class="surface-card table-wrap" th:if="${selectedBloodGroup != null}">
-        <h2 class="section-title">Results for <span th:text="${selectedBloodGroup.displayName}">A+</span></h2>
-        <table class="data-table">
+        <h2 class="section-title">
+            Donors who can give to <span th:text="${selectedBloodGroup.displayName}">A+</span>
+        </h2>
+        <p class="field-hint" style="margin-bottom: 14px;">
+            Compatible groups:
+            <span th:each="group, it : ${selectedBloodGroup.compatibleDonors()}">
+                <strong th:text="${group.displayName}">O-</strong><span th:unless="${it.last}">, </span>
+            </span>
+        </p>
+
+        <p class="field-hint" th:unless="${user != null and user.role.name() == 'ADMIN'}">
+            <i class="fa-solid fa-lock"></i>
+            Donors' phone numbers and addresses are held by the blood bank. Raise a request and an
+            administrator will contact the matching donors on your behalf.
+        </p>
+
+        <!-- Contact details are rendered for administrators only. Because this is server-side
+             rendering, the omitted columns never reach the browser at all. -->
+        <table class="data-table" th:with="isAdmin=${user != null and user.role.name() == 'ADMIN'}">
             <thead>
             <tr>
                 <th th:replace="~{fragments/sort :: sortableFiltered('Donor', 'fullName', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
                 <th th:replace="~{fragments/sort :: sortableFiltered('Blood group', 'bloodGroup', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
-                <th th:replace="~{fragments/sort :: sortableFiltered('Phone', 'phoneNumber', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                <!-- th:replace outranks th:if on the same tag, so the guard has to wrap it. -->
+                <th:block th:if="${isAdmin}">
+                    <th th:replace="~{fragments/sort :: sortableFiltered('Phone', 'phoneNumber', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                </th:block>
                 <th th:replace="~{fragments/sort :: sortableFiltered('Last donation', 'lastDonationDate', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
-                <th th:replace="~{fragments/sort :: sortableFiltered('Address', 'address', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                <th:block th:if="${isAdmin}">
+                    <th th:replace="~{fragments/sort :: sortableFiltered('Address', 'address', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                    <th>Actions</th>
+                </th:block>
             </tr>
             </thead>
             <tbody>
-            <tr th:if="${#lists.isEmpty(results)}"><td class="empty-state" colspan="5">No active donors match this blood group.</td></tr>
+            <tr th:if="${#lists.isEmpty(results)}">
+                <td class="empty-state" th:attr="colspan=${isAdmin ? 6 : 3}">
+                    No active donors can currently give to this blood group.
+                </td>
+            </tr>
             <tr th:each="donor : ${results}">
                 <td th:text="${donor.fullName}">Donor name</td>
                 <td><span class="badge badge-blood" th:text="${donor.bloodGroup.displayName}">A+</span></td>
-                <td th:text="${donor.phoneNumber != null ? donor.phoneNumber : 'Not provided'}">Phone</td>
+                <td th:if="${isAdmin}" th:text="${donor.phoneNumber != null ? donor.phoneNumber : 'Not provided'}">Phone</td>
                 <td th:text="${donor.lastDonationDate != null ? donor.lastDonationDate : 'No donations recorded'}">None</td>
-                <td th:text="${donor.address != null ? donor.address : 'Not provided'}">Address</td>
+                <td th:if="${isAdmin}" th:text="${donor.address != null ? donor.address : 'Not provided'}">Address</td>
+                <td th:if="${isAdmin}">
+                    <div class="inline-actions">
+                        <!-- Carries the request being fulfilled so the donation form arrives with
+                             it already selected. Without it this is just an ordinary recording. -->
+                        <a class="btn-success"
+                           th:href="@{/donations/record/{id}(id=${donor.id},
+                                     requestId=${fulfillingRequest != null ? fulfillingRequest.id : null})}">
+                            <i class="fa-solid fa-droplet"></i> Record donation
+                        </a>
+                    </div>
+                </td>
             </tr>
             </tbody>
         </table>
     </section>
+
+    <nav th:replace="~{fragments/pagination :: pagerFiltered(${page}, ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></nav>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

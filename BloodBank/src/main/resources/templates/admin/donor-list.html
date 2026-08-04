@@ -77,6 +77,8 @@
             </tbody>
         </table>
     </section>
+
+    <nav th:replace="~{fragments/pagination :: pager(${page}, ${sort}, ${dir}, '/admin/donors')}"></nav>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

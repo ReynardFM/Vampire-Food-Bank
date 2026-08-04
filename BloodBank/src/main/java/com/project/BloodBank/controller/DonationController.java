@@ -44,7 +44,9 @@ public class DonationController {
     }
 
     @GetMapping("/record/{donorId}")
-    public String recordForm(@PathVariable Long donorId, Model model,
+    public String recordForm(@PathVariable Long donorId,
+                             @RequestParam(required = false) Long requestId,
+                             Model model,
                              RedirectAttributes redirectAttributes) {
         try {
             addFormContext(donorId, model);
@@ -57,6 +59,9 @@ public class DonationController {
             DonationRecordDto dto = new DonationRecordDto();
             dto.setDonationDate(LocalDate.now());
             dto.setUnitsDonated(1);
+            // Arriving from a donor search that was fulfilling a request: preselect it so the
+            // administrator does not have to find it again in the dropdown.
+            dto.setLinkedRequestId(requestId);
             model.addAttribute("donationDto", dto);
         }
 

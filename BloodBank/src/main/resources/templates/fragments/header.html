@@ -3,8 +3,10 @@
 <!-- ========== HEADER FRAGMENT ========== -->
 <div class="nav_bar" th:fragment="header(user)">
     <div class="left_nav">
-        <!-- Logo - using Thymeleaf @{} for proper path resolution -->
-        <img th:src="@{/images/logo_white.png}" alt="LifeLine Logo">
+        <!-- Logo doubles as the link home -->
+        <a class="logo-link" th:href="@{/home}" title="LifeLine Blood Bank home">
+            <img th:src="@{/images/logo_white.png}" alt="LifeLine Blood Bank logo">
+        </a>
         <div class="brand">
             <h2>LifeLine Blood Bank</h2>
             <span>www.lifeline.com</span>
