@@ -4,6 +4,7 @@ import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.Gender;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -18,7 +19,13 @@ public class UserProfileDto {
     @NotNull(message = "Blood group is required")
     private BloodGroup bloodGroup;
 
+    /*
+     * Without this, Spring renders the LocalDate using a locale-dependent short format such as
+     * 8/3/26. <input type="date"> only accepts yyyy-MM-dd, so the browser discards the value and
+     * shows an empty field even though the date is stored correctly.
+     */
     @NotNull(message = "Date of birth is required")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dateOfBirth;
 
     @NotNull(message = "Gender is required")

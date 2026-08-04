@@ -3,13 +3,16 @@ package com.project.BloodBank.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
 public class DonationRecordDto {
 
+    /* Same reason as UserProfileDto.dateOfBirth: <input type="date"> needs yyyy-MM-dd. */
     @NotNull(message = "Donation date is required")
     @PastOrPresent(message = "Donation date cannot be in the future")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate donationDate;
 
     @Min(value = 1, message = "At least one unit must be recorded")
