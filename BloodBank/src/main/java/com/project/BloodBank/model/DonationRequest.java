@@ -9,6 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+// A plea for blood: a group, a number of units, a hospital.
+//
+// The centre of the application. A donor raises one, it queues as PENDING, an administrator
+// approves or rejects it. Approving does not finish the job - the request waits until a donation is
+// recorded against it and becomes FULFILLED.
+//
+// Two fields here are not what their names suggest: urgencySeverity is about sorting, decidedAt is
+// about knowing when the status last moved. Both are explained where they are declared.
 @Entity
 @Table(name = "donation_requests")
 public class DonationRequest {
@@ -34,11 +42,13 @@ public class DonationRequest {
     @Column(nullable = false)
     private UrgencyLevel urgencyLevel;
 
-    /**
-     * Numeric mirror of {@link UrgencyLevel#getSeverity()}, kept only so the admin queue can be
-     * ordered by severity. Sorting on urgency_level itself is alphabetical and therefore wrong.
-     * Derived, never set directly: {@link #setUrgencyLevel} and the lifecycle hook maintain it.
-     */
+    // The urgency level as a number, so the admin queue can sort by it. urgencyLevel is stored as
+    // text, and sorting text gives CRITICAL, HIGH, LOW, MEDIUM - alphabetical, so LOW lands in the
+    // middle and the column is useless.
+    //
+    // Storing the same thing twice usually means the copies drift. That is prevented by never
+    // letting anything set this directly: there is no setter, setUrgencyLevel() maintains it, and
+    // the lifecycle hook recalculates it before every save.
     @Column(nullable = false)
     private int urgencySeverity;
 
@@ -57,18 +67,19 @@ public class DonationRequest {
     @Column(nullable = false)
     private RequestStatus status;
 
+    // When the request arrived. updatable = false leaves it out of every UPDATE, so even a bug
+    // assigning a new value could not overwrite what is stored.
     @Column(
             nullable = false,
             updatable = false
     )
     private LocalDateTime requestDate;
 
-    /**
-     * When the request was approved or rejected. Null while it is still pending.
-     *
-     * requestDate only says when a request arrived, so without this there is no way to tell what
-     * an administrator actually acted on today.
-     */
+    // When the status last moved off PENDING. Needed because requestDate answers a different
+    // question: a request raised three weeks ago but approved this morning is today's work.
+    //
+    // Anything past PENDING with a null here predates this column. Those are left out of the daily
+    // figures rather than guessed at, since there is no way to know when they were decided.
     @Column
     private LocalDateTime decidedAt;
 
@@ -85,6 +96,12 @@ public class DonationRequest {
     public DonationRequest() {
     }
 
+    // Fills in what should not be left to whoever built the object. @PrePersist runs before the
+    // first INSERT, @PreUpdate before every UPDATE, so this applies no matter who saves - including
+    // the seeder and the tests.
+    //
+    // The first two checks are "only if not already set", so a caller that supplied a real value
+    // keeps it. The seeder relies on that to backdate its requests.
     @PrePersist
     @PreUpdate
     public void setDefaultValues() {
@@ -96,12 +113,16 @@ public class DonationRequest {
             requestDate = LocalDateTime.now();
         }
 
-        // Safety net for rows built without going through setUrgencyLevel.
+        // Recalculated unconditionally, unlike the two above: this is a derived copy, not a choice,
+        // so the right behaviour is always to overwrite it from its source.
         if (urgencyLevel != null) {
             urgencySeverity = urgencyLevel.getSeverity();
         }
     }
 
+    // Sets both ends of the relationship at once. A two-way relationship in JPA is really two
+    // fields describing the same thing, and nothing updates one when you change the other - setting
+    // only the list would look right in memory and vanish on reload.
     public void addDonation(Donation donation) {
         if (donation != null && !donations.contains(donation)) {
             donations.add(donation);
@@ -109,6 +130,7 @@ public class DonationRequest {
         }
     }
 
+    // The mirror image: clears both ends rather than just the list.
     public void removeDonation(Donation donation) {
         if (donation != null && donations.remove(donation)) {
             donation.setLinkedRequest(null);
@@ -159,12 +181,14 @@ public class DonationRequest {
         return urgencyLevel;
     }
 
+    // Does more than assign: it also refreshes the numeric copy used for sorting.
     public void setUrgencyLevel(UrgencyLevel urgencyLevel) {
         this.urgencyLevel = urgencyLevel;
         this.urgencySeverity = urgencyLevel != null ? urgencyLevel.getSeverity() : 0;
     }
 
-    /** Derived from the urgency level; there is deliberately no setter. */
+    // No matching setter on purpose. This follows the urgency level; letting anything set it
+    // independently is how the two would fall out of step.
     public int getUrgencySeverity() {
         return urgencySeverity;
     }
@@ -236,6 +260,9 @@ public class DonationRequest {
         return Objects.hash(id);
     }
 
+    // The relationship fields print as placeholders. Expanding them would fire a lazy query - or
+    // throw, since toString() is usually called outside a transaction - and printing requestedBy
+    // could recurse back through the User forever.
     @Override
     public String toString() {
         return "DonationRequest{" +

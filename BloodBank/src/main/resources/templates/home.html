@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LifeLine Blood Bank - Home</title>
-    <!-- Shared styles -->
+
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <!-- Home-specific styles -->
+
     <link rel="stylesheet" th:href="@{/css/home.css}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
@@ -15,12 +15,15 @@
 
 <div class="main_container home-panel">
 
-    <!-- ========== HEADER ========== -->
+    <!--/*
+      The landing page, public and served at both / and /home.
+
+      Its buttons change with who is looking, which is the only real logic on the page. HomeController
+      deliberately does nothing but name this view - "user" arrives from CurrentUserAdvice.
+    */-->
     <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
-    <!-- ========== MAIN CONTENT ========== -->
     <div class="form_container">
-        <!-- Left Panel: Welcome -->
         <div class="login_panel" style="border-radius: 25px 0 0 25px;">
             <h1>Welcome to LifeLine Blood Bank</h1>
             <p class="subtitle">
@@ -29,8 +32,11 @@
             </p>
 
             <div style="display: flex; gap: 15px; margin: 30px 0 20px; flex-wrap: wrap;">
-                <!-- Signing up or in makes no sense once you already are, so swap in the
-                     next useful action instead. -->
+                <!--/*
+                  Three states, not two. Signed out gets Register and Login; signed in gets the
+                  next useful action instead, which differs again for an administrator. Offering
+                  "Get Started" to somebody already signed in is a dead end.
+                */-->
                 <th:block th:if="${user == null}">
                     <a th:href="@{/register}" class="btn-home-primary">
                         <i class="fa-solid fa-heart"></i> Get Started
@@ -52,13 +58,16 @@
                 </th:block>
             </div>
 
+            <!--/*
+              #dates is the helper for the older java.util.Date API; #temporals is its counterpart
+              for LocalDate and LocalDateTime, which is what the rest of the project uses.
+            */-->
             <p style="margin-top: 20px; color: #999; font-size: 14px;">
                 <i class="fa-regular fa-calendar"></i>
                 <span th:text="${#dates.format(#dates.createNow(), 'dd MMM yyyy')}"></span>
             </p>
         </div>
 
-        <!-- Right Panel: Stats -->
         <div class="about_panel">
             <h2>Every Donation Tells a Story.</h2>
             <p class="quote">
@@ -85,7 +94,7 @@
         </div>
     </div>
 
-    <!-- ========== FOOTER ========== -->
+
     <div th:replace="~{fragments/footer :: footer}"></div>
 
 </div>

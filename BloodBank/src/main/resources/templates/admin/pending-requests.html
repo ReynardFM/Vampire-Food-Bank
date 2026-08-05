@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  The review queue: requests still waiting for a decision, with Approve and Reject on every row.
+
+  Only PENDING requests appear here, so a row vanishes as soon as it is decided. admin/request-list
+  is where it stays visible afterwards.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -28,6 +34,13 @@
     <section class="surface-card table-wrap">
         <table class="data-table">
             <thead>
+            <!--/*
+              Each heading is the shared sortable fragment. th:replace swaps this <th> for the
+              fragment entirely, so what is written here is only a placeholder that never renders.
+
+              The field names must match the controller's whitelist, or the sort silently falls back
+              to the default.
+            */-->
             <tr>
                 <th th:replace="~{fragments/sort :: sortable('Date', 'requestDate', ${sort}, ${dir}, '/admin/pending')}"></th>
                 <th th:replace="~{fragments/sort :: sortable('Requester', 'requestedBy.fullName', ${sort}, ${dir}, '/admin/pending')}"></th>
@@ -39,6 +52,7 @@
             </tr>
             </thead>
             <tbody>
+            <!--/* An empty queue is good news here, hence the tick rather than an empty folder. */-->
             <tr th:if="${#lists.isEmpty(requests)}">
                 <td class="empty-state" colspan="7">
                     <i class="fa-regular fa-circle-check"></i> There are no pending requests.
@@ -46,6 +60,11 @@
             </tr>
             <tr th:each="request : ${requests}">
                 <td>
+                    <!--/*
+                      The controller passes today's date in rather than the template working it out,
+                      so the comparison here is one call. requestDate is a date and time, so it has
+                      to be narrowed to a date before comparing.
+                    */-->
                     <span th:text="${#temporals.format(request.requestDate, 'MMM d, yyyy')}">Jul 28, 2026</span>
                     <span class="badge badge-today"
                           th:if="${today != null and request.requestDate.toLocalDate().isEqual(today)}">Today</span>
@@ -60,7 +79,17 @@
                 <td th:text="${request.urgencyLevel}">HIGH</td>
                 <td>
                     <div class="inline-actions">
+                        <!--/*
+                          from='pending' tells the detail page where "Back" should return to. It is
+                          a short token rather than a URL, so it cannot be used to redirect
+                          somewhere off-site - see RETURN_TARGETS in DonationRequestController.
+                        */-->
                         <a class="btn-secondary" th:href="@{/requests/{id}(id=${request.id}, from='pending')}">View</a>
+                        <!--/*
+                          Forms, not links, because these change something. A GET would let a
+                          browser preloader approve a request just by hovering, and would skip the
+                          CSRF token Thymeleaf adds to a th:action form.
+                        */-->
                         <form th:action="@{/admin/approve/{id}(id=${request.id})}" method="post">
                             <button class="btn-success" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
                         </form>

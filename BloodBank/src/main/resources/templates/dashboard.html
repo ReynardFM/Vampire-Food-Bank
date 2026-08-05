@@ -9,6 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  The admin dashboard: four headline figures and two bar charts.
+
+  No arithmetic happens here. DashboardController hands over a list of ready-made ChartBar objects
+  with their widths already worked out, because clamping two segments to 100% inside a template
+  would be unreadable and untestable.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -43,7 +50,10 @@
             <strong th:text="${pendingRequests}">0</strong>
             <span>Requests awaiting review</span>
         </article>
-        <!-- Accented on purpose: this is the only card that changes hour to hour. -->
+        <!--/*
+          Accented on purpose: the other three are standing totals, this is the only card that
+          changes hour to hour, so it is the one worth glancing at.
+        */-->
         <article class="stat-card is-today">
             <i class="fa-solid fa-bolt"></i>
             <strong th:text="${requestsRaisedToday + requestsDecidedToday}">0</strong>
@@ -63,6 +73,15 @@
                 <span class="legend-swatch legend-earlier"></span> earlier
                 <span class="legend-swatch legend-today"></span> today
             </p>
+            <!--/*
+              th:each is the template's for-loop: it repeats this element once per item, with "bar"
+              naming the current one. The controller supplies a row for every blood group, including
+              those with no donations, so the chart keeps its shape.
+
+              Each bar is two segments side by side inside one track, which is how today's share is
+              picked out. The th:if on each skips it entirely at zero width, rather than leaving an
+              empty element that CSS borders would still show.
+            */-->
             <div class="blood-bars">
                 <div class="blood-row" th:each="bar : ${bloodGroupBars}">
                     <strong th:text="${bar.label}">A+</strong>
@@ -89,8 +108,12 @@
                     <span class="badge" th:classappend="'badge-' + ${bar.key}"
                           th:text="${bar.label}">PENDING</span>
                     <div class="bar-track">
-                        <!-- Two segments side by side: what was already in this status, then what
-                             moved into it today. Widths are clamped in ChartBar. -->
+                        <!--/*
+                          Same two-segment idea as above, but coloured per status. th:classappend
+                          adds to the existing class rather than replacing it, so bar-fill stays and
+                          "bar-" + key gives bar-pending, bar-approved, bar-fulfilled - red, yellow
+                          and green respectively.
+                        */-->
                         <div class="bar-fill" th:classappend="'bar-' + ${bar.key}"
                              th:if="${bar.earlierPercent > 0}"
                              th:style="'width:' + ${bar.earlierPercent} + '%'"></div>

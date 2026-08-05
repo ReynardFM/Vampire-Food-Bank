@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  Account management, and the way into recording a donation.
+
+  Only active accounts appear. Deactivating is a soft delete, so the row stays in the database but
+  drops out of this list - and there is currently no screen that brings one back.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -50,6 +56,11 @@
             <tr th:each="donor : ${donors}">
                 <td th:text="${donor.fullName}">Donor name</td>
                 <td th:text="${donor.email}">donor@example.com</td>
+                <!--/*
+                  Three columns that can all be null, because registration only asks for a name,
+                  email and password. Saying "Not set" rather than leaving a blank cell makes it
+                  clear the profile is incomplete rather than the page broken.
+                */-->
                 <td>
                     <span class="badge badge-blood" th:if="${donor.bloodGroup != null}"
                           th:text="${donor.bloodGroup.displayName}">A+</span>
@@ -59,8 +70,11 @@
                 <td th:text="${donor.lastDonationDate != null ? donor.lastDonationDate : 'None recorded'}">None</td>
                 <td th:text="${donor.role}">DONOR</td>
                 <td>
-                    <!-- Administrator rows are listed for visibility only: deactivateUser refuses
-                         them, so offering the buttons would just produce an error. -->
+                    <!--/*
+                      Administrator rows are listed so you can see who has access, but carry no
+                      buttons: deactivateUser refuses them outright, so offering one would only
+                      produce an error. Hiding it is politeness - the service is the real guard.
+                    */-->
                     <div class="inline-actions" th:if="${donor.role.name() != 'ADMIN'}">
                         <a class="btn-success" th:href="@{/donations/record/{id}(id=${donor.id})}">
                             <i class="fa-solid fa-droplet"></i> Record donation

@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  The site footer, on every page.
+
+  Unlike the header this takes no parameters, because none of it changes with who is looking. The
+  Dashboard link is shown to everyone even though only administrators can open it - a donor who
+  clicks it is redirected to sign in and then refused, which is a bit blunt.
+*/-->
 <body>
 <footer class="footer" th:fragment="footer">
     <div class="footer_left">

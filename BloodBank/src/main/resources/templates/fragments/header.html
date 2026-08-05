@@ -1,9 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<!-- ========== HEADER FRAGMENT ========== -->
+<!--/*
+  The navigation bar, on every page of the site.
+
+  It takes "user" as a parameter, which every page passes as header(user=${user}). Nothing sets
+  that attribute itself: CurrentUserAdvice supplies it for every controller, which is what keeps
+  this bar consistent as you move around. A null user means nobody is signed in.
+
+  The bar has three tiers, and each th:if below picks one: signed out, signed in, and administrator.
+*/-->
 <div class="nav_bar" th:fragment="header(user)">
     <div class="left_nav">
-        <!-- Logo doubles as the link home -->
+        <!--/* The logo doubles as the link home, which people expect of a site logo. */-->
         <a class="logo-link" th:href="@{/home}" title="LifeLine Blood Bank home">
             <img th:src="@{/images/logo_white.png}" alt="LifeLine Blood Bank logo">
         </a>
@@ -13,7 +21,10 @@
         </div>
     </div>
     <div class="right_nav">
-        <!-- Show these links ONLY when user is NOT logged in -->
+        <!--/*
+          th:block is a tag that disappears when rendered. It exists so one th:if can govern a
+          group of elements without wrapping them in a <div> that would then have to be styled.
+        */-->
         <th:block th:if="${user == null}">
             <a th:href="@{/login}">
                 <i class="fa-solid fa-arrow-right-to-bracket"></i>Log In
@@ -23,8 +34,10 @@
             </a>
         </th:block>
 
-        <!-- Show these links when user IS logged in -->
-        <!-- Profile is reached by clicking the welcome badge at the end of the bar. -->
+        <!--/*
+          Signed in. There is no Profile link here on purpose - the welcome badge at the end of the
+          bar is the way in, which keeps the row shorter.
+        */-->
         <th:block th:if="${user != null}">
             <a th:href="@{/requests/list}">
                 <i class="fa-solid fa-list"></i>My Requests
@@ -32,13 +45,21 @@
             <a th:href="@{/donor/search}">
                 <i class="fa-solid fa-magnifying-glass"></i>Search
             </a>
-            <!-- Show admin links only if user is ADMIN -->
+            <!--/*
+              Hiding these is convenience, not security - the URLs are still there for anyone who
+              types them. SecurityConfig is what actually refuses a donor who tries.
+            */-->
             <a th:if="${user.role.name() == 'ADMIN'}" th:href="@{/admin/pending}">
                 <i class="fa-solid fa-clock"></i>Pending
             </a>
             <a th:if="${user.role.name() == 'ADMIN'}" th:href="@{/dashboard}">
                 <i class="fa-solid fa-chart-pie"></i>Dashboard
             </a>
+            <!--/*
+              A form rather than a link, because signing out changes something and a GET should
+              not. It also lets Thymeleaf attach the CSRF token automatically, without which
+              Spring Security would reject the request.
+            */-->
             <form class="nav-logout-form" th:action="@{/logout}" method="post">
                 <button class="nav-logout" type="submit">
                     <i class="fa-solid fa-right-from-bracket"></i>Logout
@@ -46,12 +67,12 @@
             </form>
         </th:block>
 
-        <!-- About Us is always visible -->
+        <!--/* Outside both blocks, so it shows either way. */-->
         <a th:href="@{/about-us}">
             <i class="fa-solid fa-circle-info"></i>About Us
         </a>
 
-        <!-- Welcome badge doubles as the link to your own profile (only when logged in) -->
+        <!--/* The welcome badge is also the link to your own profile. */-->
         <a th:if="${user != null}" class="welcome-text" th:href="@{/donor/profile}" title="View my profile">
             <i class="fa-solid fa-circle-user"></i>
             <span class="welcome-copy">

@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+// The admin dashboard. Gathers the figures from DashboardService and shapes them for the view.
+//
+// The two private methods below exist because Thymeleaf should not be doing arithmetic. Working out
+// bar widths in a template is hard to read and impossible to test, so the controller hands the view
+// a list of ready-made ChartBar objects instead.
 @Controller
 @RequestMapping("/dashboard")
 public class DashboardController {
@@ -37,7 +42,11 @@ public class DashboardController {
         return "dashboard";
     }
 
-    /** One bar per request status, coloured by status and split by what changed today. */
+    // One bar per request status, coloured by status and split by what changed today.
+    //
+    // Iterating over values() rather than over the map is deliberate: a status nothing is currently
+    // in is absent from the query results, and looping the map would silently drop its bar. Every
+    // status gets a row, at zero if need be, so the chart keeps the same shape.
     private List<ChartBar> statusBars() {
         Map<RequestStatus, Long> totals = dashboardService.getRequestStatusCounts();
         Map<RequestStatus, Long> today = dashboardService.getRequestStatusCountsToday();
@@ -46,13 +55,18 @@ public class DashboardController {
         for (RequestStatus status : RequestStatus.values()) {
             bars.add(ChartBar.of(
                     status.name(),
+                    // Lower-cased to build a CSS class such as badge-pending, which is how each
+                    // bar gets its colour: red pending, yellow approved, green fulfilled.
                     status.name().toLowerCase(),
+                    // getOrDefault, because a status with no rows is missing from the map entirely.
                     totals.getOrDefault(status, 0L),
                     today.getOrDefault(status, 0L)));
         }
         return bars;
     }
 
+    // The same idea for donations, except every bar shares one colour - there is no meaningful
+    // per-blood-group palette, so "blood" is passed as a fixed key.
     private List<ChartBar> bloodGroupBars() {
         Map<BloodGroup, Long> totals = dashboardService.getDonationsByBloodGroup();
         Map<BloodGroup, Long> today = dashboardService.getDonationsByBloodGroupToday();

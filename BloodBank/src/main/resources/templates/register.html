@@ -4,18 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LifeLine Blood Bank - Register</title>
-    <!-- Shared styles -->
+
     <link rel="stylesheet" th:href="@{/css/style.css}" />
     <link rel="stylesheet" th:href="@{/css/register.css}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  Registration. Only asks for three things - the rest of the profile is filled in later, from
+  /donor/complete-profile.
+
+  Unlike login.html this is a real Spring form, bound to UserRegistrationDto. That binding is what
+  makes the fields repopulate and the errors appear when a submission is rejected.
+*/-->
 <body>
-<!-- ========== HEADER ========== -->
-<!-- 1. Pass null to the header so it knows we aren't logged in -->
 <div th:replace="~{fragments/header :: header(user=null)}"></div>
 
-<!-- 2. Update the form to use the new registrationDto object -->
 <div class="form_container register-panel">
     <div class="login_panel">
         <h1>Join LifeLine</h1>
@@ -23,22 +27,31 @@
 
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-        <!-- Changed th:object to ${registrationDto} -->
+        <!--/*
+          th:object names the backing DTO. Inside this form, *{fullName} then means "the fullName
+          property of that object" - the * is shorthand for the object th:object selected.
+
+          th:field does three jobs at once: it sets id, name, and value from the property. That is
+          why the input comes back filled in after a rejected submission.
+        */-->
         <form th:action="@{/register}" th:object="${registrationDto}" method="post">
 
             <label for="fullName">Full Name</label>
             <input type="text" id="fullName" th:field="*{fullName}" placeholder="e.g. Jane Doe" required />
-            <!-- Field-level Validation Error -->
+            <!--/*
+              th:errors prints whatever the DTO's validation annotations produced for this field.
+              The "required" attribute above is only a browser check and is trivially bypassed, so
+              this server-side pass is the one that counts.
+            */-->
             <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" style="color: #d62929; display: block; margin-top: -15px; margin-bottom: 15px; font-size: 13px;"></span>
 
             <label for="email">Email Address</label>
             <input type="email" id="email" th:field="*{email}" placeholder="you@example.com" required />
-            <!-- Field-level Validation Error -->
+            <!--/* Also where the "email already in use" message lands - AuthController attaches it to this field. */-->
             <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color: #d62929; display: block; margin-top: -15px; margin-bottom: 15px; font-size: 13px;"></span>
 
             <label for="password">Password</label>
             <input type="password" id="password" th:field="*{password}" placeholder="Create a secure password (min. 8 chars)" required />
-            <!-- Field-level Validation Error -->
             <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color: #d62929; display: block; margin-top: -15px; margin-bottom: 15px; font-size: 13px;"></span>
 
             <button type="submit" style="margin-top: 10px;">
@@ -51,7 +64,7 @@
         </p>
     </div>
 
-    <!-- Right Panel: About/Info -->
+
     <div class="about_panel">
         <h2>Make a Difference</h2>
         <p class="quote">
@@ -78,7 +91,7 @@
 
 </div>
 
-<!-- ========== FOOTER ========== -->
+
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

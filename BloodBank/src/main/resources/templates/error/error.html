@@ -9,6 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  Everything that is not a 404. CustomErrorController sends failures here rather than to the 404
+  page, which would report a genuine server fault as "not found".
+
+  403 is singled out because it is the one an ordinary user actually meets - a donor following a
+  link to an admin page. It is a different situation from a crash and deserves different wording.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -16,6 +23,10 @@
     <section class="surface-card error-card">
         <div class="error-code" th:text="${status != null ? status : 'Error'}">500</div>
 
+        <!--/*
+          th:unless is th:if negated. The pair gives an if/else, since Thymeleaf has no th:else -
+          both conditions have to be written out, and they must stay exact opposites.
+        */-->
         <h1 th:if="${status != null and status == 403}">You don't have access to that page.</h1>
         <h1 th:unless="${status != null and status == 403}">Something went wrong.</h1>
 

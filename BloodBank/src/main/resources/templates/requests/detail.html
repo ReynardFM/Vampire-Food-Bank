@@ -8,6 +8,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  One request in full, shared by donors and administrators.
+
+  Because both reach it, the controller decides where "Back" goes and passes backUrl and backLabel
+  in. The page never works that out itself, and never takes a URL from the query string - doing so
+  would let a crafted link redirect someone off-site.
+
+  Read-only. Approving and rejecting live on the pending queue, not here.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -18,7 +27,11 @@
             <h2 style="font-size: 24px; color: #222;">
                 <i class="fa-solid fa-circle-info" style="color: #d62929; margin-right: 10px;"></i>Request #<span th:text="${request.id}"></span>
             </h2>
-            <!-- Status Badge -->
+            <!--/*
+              Four separate th:if blocks, one per status, because each carries its own inline
+              colours. The listing pages do this in one line by deriving a CSS class from the
+              status name - worth copying here if this page is ever moved onto pages.css.
+            */-->
             <div>
                 <span th:if="${request.status.name() == 'PENDING'}" style="background: #fff3cd; color: #856404; padding: 6px 12px; border-radius: 12px; font-size: 14px; font-weight: 600;">PENDING</span>
                 <span th:if="${request.status.name() == 'APPROVED'}" style="background: #d4edda; color: #155724; padding: 6px 12px; border-radius: 12px; font-size: 14px; font-weight: 600;">APPROVED</span>
@@ -59,6 +72,7 @@
             <p style="font-size: 16px; font-weight: 600; color: #222;" th:text="${request.hospitalAddress}"></p>
         </div>
 
+        <!--/* Notes are the only optional field on a request, so the whole block is conditional. */-->
         <div style="margin-bottom: 30px;" th:if="${request.notes != null and !request.notes.isEmpty()}">
             <p style="color: #777; font-size: 14px; margin-bottom: 4px;">Additional Notes</p>
             <p style="font-size: 15px; color: #442222; background: #fdfdfe; padding: 12px; border: 1px solid #eee; border-radius: 8px;" th:text="${request.notes}"></p>

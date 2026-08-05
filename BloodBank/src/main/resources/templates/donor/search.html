@@ -9,6 +9,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  Donor search - and, for an administrator arriving from an approval, the middle step of the
+  fulfilment workflow.
+
+  Two things make this page unusual. It shows different columns depending on who is looking, and it
+  can be carrying a request it is trying to fulfil. Both are handled below.
+
+  You search by the group the *patient* needs, not the group you want to find. The results are
+  everyone whose blood is safe for that patient, which is a wider set - see BloodGroup.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -31,8 +41,14 @@
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-    <!-- Shown while fulfilling a specific approved request. It disappears on its own once the
-         request is fulfilled, because the controller only sets this for APPROVED requests. -->
+    <!--/*
+      The workflow banner: shown only when this search is being done on behalf of an approved
+      request, which is what makes the job resumable.
+
+      It disappears on its own once the request is fulfilled, because the controller only sets this
+      attribute for a request that is still APPROVED. "Leave for later" simply drops requestId from
+      the URL - the request stays approved and can be picked up again from the request list.
+    */-->
     <section class="surface-card fulfilling-banner" th:if="${fulfillingRequest != null}">
         <div>
             <div class="eyebrow">Fulfilling request</div>
@@ -57,6 +73,11 @@
     </section>
 
     <section class="surface-card" style="margin-bottom: 24px;">
+        <!--/*
+          method="get" rather than post, deliberately. A search reads and changes nothing, so the
+          criteria belong in the URL where the result can be bookmarked, shared and refreshed.
+          That is also what lets approving a request link straight into a filled-in search.
+        */-->
         <form th:action="@{/donor/search}" method="get">
             <div class="form-grid">
                 <div class="form-field">
@@ -91,14 +112,28 @@
             administrator will contact the matching donors on your behalf.
         </p>
 
-        <!-- Contact details are rendered for administrators only. Because this is server-side
-             rendering, the omitted columns never reach the browser at all. -->
+        <!--/*
+          Contact details are for administrators only.
+
+          th:with declares a variable for this element and everything inside it, so the role check
+          is written once instead of on each of the six places below that need it.
+
+          This is a real privacy control, not a cosmetic one. Because Thymeleaf renders on the
+          server, a column skipped here is never sent - there is no hidden markup to reveal with
+          developer tools. The controller separately refuses to sort by those columns, since
+          ordering by a hidden field would leak it just as effectively.
+        */-->
         <table class="data-table" th:with="isAdmin=${user != null and user.role.name() == 'ADMIN'}">
             <thead>
             <tr>
                 <th th:replace="~{fragments/sort :: sortableFiltered('Donor', 'fullName', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
                 <th th:replace="~{fragments/sort :: sortableFiltered('Blood group', 'bloodGroup', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
-                <!-- th:replace outranks th:if on the same tag, so the guard has to wrap it. -->
+                <!--/*
+                  The wrapper is not decoration. Thymeleaf applies its attributes in a fixed order,
+                  and th:replace runs before th:if - so putting both on one tag would replace the
+                  element first and the condition would never be consulted. Wrapping the guard
+                  around it is the way to make it apply.
+                */-->
                 <th:block th:if="${isAdmin}">
                     <th th:replace="~{fragments/sort :: sortableFiltered('Phone', 'phoneNumber', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
                 </th:block>
@@ -111,6 +146,7 @@
             </thead>
             <tbody>
             <tr th:if="${#lists.isEmpty(results)}">
+                <!--/* colspan has to follow the same role check, or the empty row spans wrongly. */-->
                 <td class="empty-state" th:attr="colspan=${isAdmin ? 6 : 3}">
                     No active donors can currently give to this blood group.
                 </td>
@@ -123,8 +159,12 @@
                 <td th:if="${isAdmin}" th:text="${donor.address != null ? donor.address : 'Not provided'}">Address</td>
                 <td th:if="${isAdmin}">
                     <div class="inline-actions">
-                        <!-- Carries the request being fulfilled so the donation form arrives with
-                             it already selected. Without it this is just an ordinary recording. -->
+                        <!--/*
+                          The last step of the workflow. Passing requestId on means the donation
+                          form opens with that request already chosen; without it this is just an
+                          ordinary walk-in recording, which is exactly what it should be when no
+                          request is being fulfilled.
+                        */-->
                         <a class="btn-success"
                            th:href="@{/donations/record/{id}(id=${donor.id},
                                      requestId=${fulfillingRequest != null ? fulfillingRequest.id : null})}">

@@ -9,6 +9,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+<!--/*
+  Raising a blood request. Any signed-in account can, donor or administrator.
+
+  Nothing here sets who is requesting or what status it starts in. The controller takes the
+  requester from the session and the entity defaults the status to PENDING, so neither can be
+  chosen by editing the posted data.
+*/-->
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
 <div class="form_container" style="justify-content: center;">
@@ -25,7 +32,10 @@
                     <label for="requestedBloodGroup">Blood Group Needed</label>
                     <select id="requestedBloodGroup" th:field="*{requestedBloodGroup}" required>
                         <option value="" disabled selected>Select Blood Group</option>
-                        <!-- Using the model attribute passed from the controller -->
+                        <!--/*
+                          Built from the enum rather than typed out, so the list can never fall out
+                          of step with the values the application actually accepts.
+                        */-->
                         <option th:each="bg : ${bloodGroups}" th:value="${bg}" th:text="${bg.displayName}"></option>
                     </select>
                     <span th:if="${#fields.hasErrors('requestedBloodGroup')}" th:errors="*{requestedBloodGroup}" style="color: #d62929; font-size: 13px;"></span>

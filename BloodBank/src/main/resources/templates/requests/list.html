@@ -9,6 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+<!--/*
+  A donor's own requests, and how they were decided.
+
+  Scoped to whoever is signed in - the controller queries by the current user, so this never shows
+  anyone else's. The equivalent admin view of every request is admin/request-list.
+*/-->
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
 <div class="form_container" style="flex-direction: column; align-items: center; padding-top: 30px;">
@@ -42,14 +48,20 @@
                 </td>
             </tr>
             <tr th:each="req : ${requests}" style="border-bottom: 1px solid #eee;">
-                <!-- Formatting the LocalDateTime object -->
+                <!--/*
+                  #temporals is Thymeleaf's date helper. Without it a LocalDateTime prints in its
+                  raw form, including the time to the nanosecond.
+                */-->
                 <td style="padding: 15px 8px;" th:text="${#temporals.format(req.requestDate, 'yyyy-MM-dd')}"></td>
                 <td style="padding: 15px 8px; font-weight: bold; color: #d62929;" th:text="${req.requestedBloodGroup.displayName}"></td>
                 <td style="padding: 15px 8px;" th:text="${req.unitsNeeded}"></td>
                 <td style="padding: 15px 8px;" th:text="${req.hospitalName}"></td>
                 <td style="padding: 15px 8px;" th:text="${req.urgencyLevel}"></td>
                 <td style="padding: 15px 8px;">
-                    <!-- Status Badges -->
+                    <!--/*
+                      Four th:if blocks because the colours are inline here. admin/request-list does
+                      the same job in one line by deriving a CSS class from the status name.
+                    */-->
                     <span th:if="${req.status.name() == 'PENDING'}" style="background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">PENDING</span>
                     <span th:if="${req.status.name() == 'APPROVED'}" style="background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">APPROVED</span>
                     <span th:if="${req.status.name() == 'REJECTED'}" style="background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">REJECTED</span>

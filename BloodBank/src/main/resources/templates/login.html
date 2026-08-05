@@ -4,35 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LifeLine Blood Bank - Login</title>
-    <!-- Your custom CSS -->
+
     <link rel="stylesheet" th:href="@{/css/style.css}" />
-    <!-- Font Awesome -->
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <!-- Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  The sign-in page.
+
+  Note that this form is not handled by any controller. Spring Security intercepts POST /login
+  before it reaches one, checks the password, and redirects. AuthController only renders this page.
+*/-->
 <body>
 
-<!-- ========== HEADER ========== -->
+<!--/* user=null hard-coded: nobody signed in can be looking at the sign-in page. */-->
 <div th:replace="~{fragments/header :: header(user=null)}"></div>
 
-<!-- ========== LOGIN FORM ========== -->
 <div class="form_container">
-    <!-- Left Panel: Login Form -->
     <div class="login_panel">
         <h1>Welcome Back</h1>
         <p class="subtitle">Log in to your account to continue.</p>
 
-        <!-- Success message (e.g., after registration) -->
+        <!--/*
+          Three outcomes, three messages. "success" is a flash attribute set by registration and
+          survives exactly one redirect; the other two come from ?logout and ?error, which Spring
+          Security appends and AuthController turns into text.
+        */-->
         <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-        <!-- Logout message -->
         <div th:if="${logout}" class="alert alert-info" th:text="${logout}"></div>
-        <!-- Error message (from login failure) -->
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
         <form th:action="@{/login}" method="post">
-            <!-- CSRF token auto-added by Thymeleaf -->
+            <!--/*
+              Plain name attributes rather than th:field, because there is no DTO behind this form -
+              Spring Security reads the raw parameters. The names must be exactly "username" and
+              "password", which is what it looks for.
 
+              Thymeleaf adds the CSRF token automatically to any th:action form, and without it
+              Spring Security would reject the post.
+            */-->
             <label for="username">Email Address</label>
             <input type="email" id="username" name="username" placeholder="you@example.com" required autofocus />
 
@@ -40,11 +52,13 @@
             <input type="password" id="password" name="password" placeholder="••••••••" required />
 
             <div class="form_options">
+                <!--/*
+                  This checkbox currently does nothing. Remember-me needs .rememberMe() enabling in
+                  SecurityConfig, which is not configured, so the parameter is simply ignored.
+                */-->
                 <label>
                     <input type="checkbox" name="remember-me" /> Remember me
                 </label>
-                <!-- Optional: forgot password link (can be added later) -->
-                <!-- <a href="#">Forgot password?</a> -->
             </div>
 
             <button type="submit">
@@ -57,7 +71,7 @@
         </p>
     </div>
 
-    <!-- Right Panel: About/Info -->
+
     <div class="about_panel">
         <h2>Why Donate Blood?</h2>
         <p class="quote">
@@ -85,10 +99,12 @@
     </div>
 </div>
 
-<!-- ========== FOOTER ========== -->
 <div th:replace="~{fragments/footer :: footer}"></div>
 
-<!-- Optional: Add custom styles for alerts (if not already in style.css) -->
+<!--/*
+  Alert styling inline rather than in style.css, which is where the rest of the site keeps it.
+  Worth moving if these alerts are ever needed on another page that does not load pages.css.
+*/-->
 <style>
     .alert {
         padding: 12px 20px;

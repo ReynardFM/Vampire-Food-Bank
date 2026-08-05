@@ -1,23 +1,39 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  Previous/next controls, shared by every listing.
+
+  Everything here reads a Spring Data Page, which the controller put in the model. A Page is not
+  just the rows: it also knows which page it is, how many there are in total, and whether it is the
+  first or last - so the template never has to work any of that out.
+
+  As in sort.html, the second fragment exists only to carry donor search's bloodGroup filter.
+*/-->
 <body>
 
-<!--
-  Page controls for a listing.
-
-    page - the Spring Data Page the controller put in the model
+<!--/*
+    page - the Page object from the controller
     sort - the current URL-facing sort name
     dir  - the current direction, "asc" or "desc"
     url  - the listing's own path, e.g. '/admin/donors'
 
-  Renders nothing when everything fits on one page. Sort and direction are carried through so
-  paging does not silently reset the ordering.
--->
+  The th:if on the <nav> hides the whole thing when everything fits on one page, so a short list
+  gets no clutter. The null check guards the search page, which has no Page at all until a blood
+  group has been chosen.
+
+  sort and dir are threaded through both links. Leaving them out would silently reset the ordering
+  the moment somebody turned the page.
+*/-->
 <nav th:fragment="pager(page, sort, dir, url)" class="pager" th:if="${page != null and page.totalPages > 1}">
+    <!--/* page.number counts from zero, so every displayed number below adds one. */-->
     <a class="btn-secondary" th:if="${!page.first}"
        th:href="@{${url}(page=${page.number - 1}, sort=${sort}, dir=${dir})}">
         <i class="fa-solid fa-arrow-left"></i> Previous
     </a>
+    <!--/*
+      An empty span where the button would be. Without it, losing "Previous" on page one would let
+      the status text slide left and the "Next" button jump as you page through.
+    */-->
     <span th:unless="${!page.first}" class="pager-spacer"></span>
 
     <span class="pager-status">
@@ -33,7 +49,7 @@
     <span th:unless="${!page.last}" class="pager-spacer"></span>
 </nav>
 
-<!-- As above, but keeps the donor search's bloodGroup filter in the link. -->
+<!--/* As above, but keeps the donor search's bloodGroup filter in the link. */-->
 <nav th:fragment="pagerFiltered(page, sort, dir, url, bloodGroup)" class="pager"
      th:if="${page != null and page.totalPages > 1}">
     <a class="btn-secondary" th:if="${!page.first}"

@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us - LifeLine Blood Bank</title>
-    <!-- Shared styles -->
+
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <!-- Reuses the home page layout classes -->
+
     <link rel="stylesheet" th:href="@{/css/home.css}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
@@ -15,12 +15,15 @@
 
 <div class="main_container home-panel">
 
-    <!-- ========== HEADER ========== -->
+    <!--/*
+      A static information page - no model data beyond the header's "user", and no logic at all.
+
+      It borrows home.css and the home page's layout classes rather than defining its own, which is
+      why the two look like siblings.
+    */-->
     <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
-    <!-- ========== MAIN CONTENT ========== -->
     <div class="form_container">
-        <!-- Left Panel: Story -->
         <div class="login_panel" style="border-radius: 25px 0 0 25px;">
             <h1>About LifeLine</h1>
             <p class="subtitle">
@@ -53,7 +56,7 @@
             </div>
         </div>
 
-        <!-- Right Panel: Promise -->
+
         <div class="about_panel">
             <h2>Built Around One Promise.</h2>
             <p class="quote">
@@ -82,7 +85,7 @@
         </div>
     </div>
 
-    <!-- ========== FOOTER ========== -->
+
     <div th:replace="~{fragments/footer :: footer}"></div>
 
 </div>

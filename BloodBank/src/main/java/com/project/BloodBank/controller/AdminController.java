@@ -17,6 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// The administrator's side of the application: the pending queue, every request, and accounts.
+//
+// @RequestMapping("/admin") prefixes every path below, so @GetMapping("/pending") serves
+// /admin/pending. That prefix is also what SecurityConfig locks down with a single rule, which is
+// why none of these methods checks the role itself.
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
@@ -32,11 +37,9 @@ public class AdminController {
         this.pageSupport = pageSupport;
     }
 
-    /**
-     * Same purpose as DONOR_SORT_FIELDS: keep an unknown ?sort= from becoming a 500. Maps the name
-     * used in the URL to the property actually sorted on, which differ for urgency because the
-     * enum column sorts alphabetically rather than by severity.
-     */
+    // Which ?sort= values are allowed, and what each one really orders on. A map rather than a set
+    // because urgencyLevel has to order on urgencySeverity - sorting the enum's text is
+    // alphabetical, so LOW lands in the middle.
     private static final Map<String, String> REQUEST_SORT_FIELDS = Map.of(
             "requestDate", "requestDate",
             "requestedBy.fullName", "requestedBy.fullName",
@@ -46,6 +49,10 @@ public class AdminController {
             "urgencyLevel", "urgencySeverity",
             "status", "status");
 
+    // The review queue: everything still waiting for a decision.
+    //
+    // @RequestParam with a defaultValue means these are optional - arriving at /admin/pending with
+    // no query string gives newest first, page zero.
     @GetMapping("/pending")
     public String viewPendingRequests(
             @RequestParam(defaultValue = "requestDate") String sort,
@@ -72,6 +79,12 @@ public class AdminController {
         }
     }
 
+    // A POST rather than a GET because it changes something. A GET would let a link, a bookmark or
+    // a page preloader approve a request by accident, and Spring Security's CSRF protection only
+    // covers the methods that are meant to write.
+    //
+    // Redirecting afterwards rather than rendering is the post/redirect/get pattern: it means a
+    // browser refresh re-runs the harmless GET rather than approving a second time.
     @PostMapping("/approve/{id}")
     public String approveRequest(
             @PathVariable Long id,
@@ -82,16 +95,24 @@ public class AdminController {
             BloodGroup needed = approved.getRequestedBloodGroup();
 
             // Approving is almost always followed by "so who can actually give?", so go straight
-            // there with the group already filled in instead of sending the admin back to the
+            // there with the group filled in rather than sending the administrator back to the
             // queue to navigate across by hand.
+            //
+            // Note the two kinds of attribute. A flash attribute survives one redirect and then
+            // disappears; addAttribute appends to the query string, which is what puts
+            // ?bloodGroup=...&requestId=... on the URL and makes the resulting page linkable.
             redirectAttributes.addFlashAttribute("success",
                     "Request approved. Showing donors who can give to " + needed.getDisplayName() + ".");
             redirectAttributes.addAttribute("bloodGroup", needed);
-            // Carried so the search page knows which request is being fulfilled, and can hand it
-            // on to the donation form. The request staying APPROVED is what makes this resumable.
+
+            // Carried so the search page knows which request is being fulfilled and can hand it on
+            // to the donation form. The request staying APPROVED is what makes this resumable: the
+            // administrator can walk away and pick it up from the request list later.
             redirectAttributes.addAttribute("requestId", approved.getId());
             return "redirect:/donor/search";
         } catch (IllegalStateException e) {
+            // Thrown by approveRequest when the request is no longer PENDING - usually because
+            // another administrator got there first, or the page was left open too long.
             redirectAttributes.addFlashAttribute("error", "Request is no longer pending.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Failed to approve request: " + e.getMessage());
@@ -99,6 +120,7 @@ public class AdminController {
         return "redirect:/admin/pending";
     }
 
+    // Rejecting has no follow-on step, so unlike approving it just returns to the queue.
     @PostMapping("/reject/{id}")
     public String rejectRequest(
             @PathVariable Long id,
@@ -115,17 +137,14 @@ public class AdminController {
         return "redirect:/admin/pending";
     }
 
-    /**
-     * Only these may reach Sort. Anything else would raise PropertyReferenceException and turn a
-     * hand-edited query string into a 500.
-     */
+    // A plain set here, unlike REQUEST_SORT_FIELDS, because every one of these sorts on the column
+    // it is named after. Note what is absent: password is a field on User, and without this list
+    // ?sort=password would happily order the table by hash.
     private static final Set<String> DONOR_SORT_FIELDS =
             Set.of("fullName", "email", "bloodGroup", "phoneNumber", "lastDonationDate", "role");
 
-    /**
-     * The pending queue filters to PENDING, so this is the only place a decided request stays
-     * visible after it has been approved or rejected.
-     */
+    // Every request whatever its status. The pending queue filters to PENDING, so this is the only
+    // place an approved or rejected request stays visible.
     @GetMapping("/requests")
     public String listAllRequests(
             @RequestParam(defaultValue = "requestDate") String sort,
@@ -144,6 +163,8 @@ public class AdminController {
         return "admin/request-list";
     }
 
+    // Account management. Administrators appear here too - safe now that deactivateUser refuses
+    // them outright, so an admin row can be shown without being a hazard.
     @GetMapping("/donors")
     public String listDonors(
             @RequestParam(defaultValue = "fullName") String sort,
@@ -167,8 +188,11 @@ public class AdminController {
             @PathVariable Long id,
             RedirectAttributes redirectAttributes) {
 
-        // Deactivating yourself blocks your own sign-in, and nothing in the app can create or
-        // re-enable an administrator, so it would end admin access permanently.
+        // Two guards, in two places, for two different mistakes.
+        //
+        // This one is about the person clicking: deactivating yourself blocks your own sign-in, and
+        // since nothing can create or re-enable an administrator, that would end admin access
+        // permanently. It lives here because it needs to know who is signed in.
         if (id.equals(userService.getCurrentUser().getId())) {
             redirectAttributes.addFlashAttribute("error", "You cannot deactivate your own account.");
             return "redirect:/admin/donors";
@@ -178,7 +202,9 @@ public class AdminController {
             userService.deactivateUser(id);
             redirectAttributes.addFlashAttribute("success", "Donor deactivated successfully.");
         } catch (IllegalStateException e) {
-            // Raised when the target is an administrator.
+            // The other guard, raised by the service when the target is any administrator - not
+            // just yourself. It sits in the service so it holds for every caller, not only this
+            // screen. Its message is already written for the user, so it is passed straight on.
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Failed to deactivate donor: " + e.getMessage());

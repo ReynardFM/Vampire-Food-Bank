@@ -9,6 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  One form serving two purposes: editing a profile, and completing one for the first time.
+
+  DonorController renders this for both /donor/profile-edit and /donor/complete-profile, passing
+  formAction to say which. That is what the form posts back to, and what the heading below checks.
+  Two nearly identical templates would only drift apart.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -16,6 +23,7 @@
     <div class="page-heading">
         <div>
             <div class="eyebrow">Donor profile</div>
+            <!--/* The only visible difference between the two uses. */-->
             <h1 th:text="${formAction == '/donor/complete-profile' ? 'Complete Your Profile' : 'Edit Your Profile'}">Edit Your Profile</h1>
             <p>Accurate contact and blood-group information helps LifeLine connect the right donors with urgent needs.</p>
         </div>
@@ -39,12 +47,23 @@
                 </div>
                 <div class="form-field">
                     <label for="bloodGroup">Blood group</label>
+                    <!--/*
+                      bloodGroups comes from a @ModelAttribute method on the controller, which runs
+                      before every handler there - so it is present on both routes without either
+                      having to add it. th:field on the select marks the matching option selected.
+                    */-->
                     <select id="bloodGroup" th:field="*{bloodGroup}">
                         <option value="">Select blood group</option>
                         <option th:each="group : ${bloodGroups}" th:value="${group}" th:text="${group.displayName}"></option>
                     </select>
                     <span class="field-error" th:if="${#fields.hasErrors('bloodGroup')}" th:errors="*{bloodGroup}"></span>
                 </div>
+                <!--/*
+                  This field needs @DateTimeFormat(ISO.DATE) on the DTO to work. An
+                  <input type="date"> only understands yyyy-MM-dd, and Spring's default format is
+                  locale-dependent - without the annotation the browser rejects the value and the
+                  field renders blank, even though the date is stored perfectly well.
+                */-->
                 <div class="form-field">
                     <label for="dateOfBirth">Date of birth</label>
                     <input id="dateOfBirth" type="date" th:field="*{dateOfBirth}">

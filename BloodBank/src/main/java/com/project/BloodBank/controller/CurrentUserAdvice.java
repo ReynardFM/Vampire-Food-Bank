@@ -7,16 +7,19 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
-/**
- * Every page renders the shared header fragment as header(user=${user}), but "user" is a plain
- * model attribute, so the header only showed its signed-in branch on the few pages whose
- * controller happened to add it. Supplying it for every controller keeps the header consistent
- * as you navigate.
- *
- * The row is reloaded rather than taken straight from the security context: the principal is a
- * snapshot from sign-in time, so a donor who edits their profile would keep seeing their old name
- * in the header until they logged out and back in.
- */
+// Puts the signed-in user in the model for every page.
+//
+// @ControllerAdvice applies to all controllers at once, and a @ModelAttribute method inside one
+// runs before every handler. Without it, the header's header(user=${user}) fragment only showed
+// its signed-in branch on the few pages whose controller happened to add the attribute, so the
+// header flipped between signed-in and guest as you navigated.
+//
+// The row is reloaded rather than taken from the security context, because the principal there is
+// a snapshot from sign-in and never changes. A donor who edited their profile would keep seeing
+// their old name in the header until they signed out and back in.
+//
+// One thing it does not cover: @ExceptionHandler methods, which Spring runs without the
+// @ModelAttribute pass. GlobalExceptionHandler calls this class directly for that reason.
 @ControllerAdvice
 public class CurrentUserAdvice {
 
@@ -26,7 +29,8 @@ public class CurrentUserAdvice {
         this.userService = userService;
     }
 
-    /** Null for anonymous visitors, which is what the header's guest branch checks for. */
+    // @AuthenticationPrincipal hands over the signed-in User, or null for a visitor who is not
+    // signed in - which is exactly what the header's guest branch checks for.
     @ModelAttribute("user")
     public User currentUser(@AuthenticationPrincipal User principal) {
         if (principal == null) {
@@ -36,8 +40,9 @@ public class CurrentUserAdvice {
         try {
             return userService.getUserById(principal.getId());
         } catch (ResourceNotFoundException e) {
-            // Deactivated part-way through a session. Must be swallowed: letting this escape a
-            // @ModelAttribute method would turn every page into the 404 view.
+            // Deactivated part-way through a session, since getUserById ignores inactive rows.
+            // Swallowed on purpose: this method runs before every page, so letting it escape would
+            // turn the entire application into the 404 view.
             return null;
         }
     }

@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.Objects;
 
+// One recorded act of giving blood, entered by an administrator after the collection.
+// A donation is a historical fact, so nothing here is edited or deleted once written.
 @Entity
 @Table(name="donations")
 public class Donation {
@@ -12,6 +14,11 @@ public class Donation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Many donations point at one user, and the foreign key lives in this table. LAZY means the
+    // User is a placeholder until something reads it, which must happen inside a transaction.
+    //
+    // ON DELETE RESTRICT makes the database refuse to delete a user who still has donations - which
+    // is why accounts are deactivated rather than deleted.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "donor_id",
@@ -23,6 +30,8 @@ public class Donation {
     )
     private User donor;
 
+    // The day blood was collected, not the day this was typed in. A late entry carries an earlier
+    // date, which is why DonationService only moves lastDonationDate forward.
     @Column(nullable=false)
     private LocalDate donationDate;
 
@@ -32,6 +41,12 @@ public class Donation {
     @Column
     private String location;
 
+    // The approved request this was collected for, or null for a walk-in. Setting it marks the
+    // request FULFILLED, which DonationService only allows once it has checked the request is still
+    // approved and the blood is safe for that patient.
+    //
+    // SET NULL rather than RESTRICT here: if a request were ever removed, the donation still
+    // happened and should survive unlinked rather than block the delete.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "linked_request_id",
@@ -95,6 +110,8 @@ public class Donation {
         this.linkedRequest = linkedRequest;
     }
 
+    // Same rule as the other entities: equal means the same row, and the null guard stops every
+    // unsaved Donation comparing equal to every other unsaved one.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

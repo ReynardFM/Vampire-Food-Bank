@@ -9,6 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  Every request, whatever its status. The pending queue filters to PENDING, so this is the only
+  place an approved or rejected one stays visible.
+
+  It also carries the resume step: an approved request that has not been fulfilled yet gets a
+  "Find donors" button, which is what lets an interrupted job be picked up days later.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -19,9 +26,10 @@
             <h1>All Requests</h1>
             <p>Every request and how it was decided, including the ones no longer in the pending queue.</p>
         </div>
-        <!-- Dashboard first, matching the pending queue and the account list: this page is reached
-             from the dashboard, so the way back has to be here too. Pending queue stays as the
-             onward step. -->
+        <!--/*
+          Dashboard first, matching the pending queue and the account list: this page is reached
+          from the dashboard, so the way back belongs here too. Pending queue is the onward step.
+        */-->
         <div class="inline-actions">
             <a class="btn-secondary" th:href="@{/dashboard}">
                 <i class="fa-solid fa-arrow-left"></i> Dashboard
@@ -63,6 +71,11 @@
                 <td th:text="${request.hospitalName}">Hospital</td>
                 <td th:text="${request.urgencyLevel}">HIGH</td>
                 <td>
+                    <!--/*
+                      The status name lower-cased becomes a CSS class - badge-pending, badge-approved
+                      and so on - which is how each badge gets its colour. Adding a status to the
+                      enum without a matching CSS rule would leave it unstyled.
+                    */-->
                     <span class="badge"
                           th:classappend="${'badge-' + #strings.toLowerCase(request.status.name())}"
                           th:text="${request.status}">PENDING</span>
@@ -70,8 +83,11 @@
                 <td>
                     <div class="inline-actions">
                         <a class="btn-secondary" th:href="@{/requests/{id}(id=${request.id}, from='all')}">View</a>
-                        <!-- An APPROVED request is an unfinished job: this picks the fulfilment
-                             back up wherever it was left. -->
+                        <!--/*
+                          An APPROVED request is an unfinished job, so this offers the way back into
+                          it - the same donor search that approving would have opened, with the
+                          blood group and the request id already filled in.
+                        */-->
                         <a class="btn-success" th:if="${request.status.name() == 'APPROVED'}"
                            th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id})}">
                             <i class="fa-solid fa-magnifying-glass"></i> Find donors

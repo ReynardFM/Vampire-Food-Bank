@@ -24,6 +24,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Set;
 
+// A donor's own area: their profile, their donation history, and donor search.
+//
+// Everything here is available to any signed-in account, not just donors. Administrators use the
+// same search screen, and see more of it - see the two sort whitelists below.
 @Controller
 @RequestMapping("/donor")
 public class DonorController {
@@ -41,6 +45,9 @@ public class DonorController {
         this.pageSupport = pageSupport;
     }
 
+    // @ModelAttribute on a method rather than a parameter: these run before every handler in this
+    // class and add their return value to the model, so the dropdowns are populated on all of them
+    // without each one repeating it.
     @ModelAttribute("bloodGroups")
     public BloodGroup[] bloodGroups() {
         return BloodGroup.values();
@@ -58,13 +65,14 @@ public class DonorController {
     private static final Set<String> HISTORY_SORT_FIELDS =
             Set.of("donationDate", "location", "unitsDonated");
 
+    // Two whitelists, because the search results table shows different columns depending on who is
+    // looking. Administrators get phone and address; ordinary members do not.
     private static final Set<String> SEARCH_SORT_FIELDS_ADMIN =
             Set.of("fullName", "bloodGroup", "phoneNumber", "lastDonationDate", "address");
 
-    /**
-     * Non-administrators never see the phone or address columns, so they must not be able to order
-     * by them either: sorting on a hidden column still leaks its relative ordering.
-     */
+    // The narrower list is a privacy measure, not tidiness. Sorting by a hidden column still leaks
+    // it: page through ?sort=phoneNumber and you learn everyone's relative phone numbers without
+    // the column ever being displayed.
     private static final Set<String> SEARCH_SORT_FIELDS_MEMBER =
             Set.of("fullName", "bloodGroup", "lastDonationDate");
 
@@ -88,6 +96,10 @@ public class DonorController {
         return "donor/profile";
     }
 
+    // Fills a DTO from the stored user so the form comes back with the current values in it.
+    //
+    // Copying field by field rather than handing the entity to the form is what stops the form
+    // being able to reach anything it should not - there is no email, role or active on the DTO.
     @GetMapping("/profile-edit")
     public String editProfileForm(Model model) {
         User currentUser = userService.getCurrentUser();
@@ -128,6 +140,8 @@ public class DonorController {
         }
     }
 
+    // The same form under a different name, for a donor who has never filled it in. Only the
+    // wording and the destination differ, so this reuses the method above rather than repeating it.
     @GetMapping("/complete-profile")
     public String completeProfileForm(Model model) {
         String view = editProfileForm(model);
@@ -159,6 +173,10 @@ public class DonorController {
         }
     }
 
+    // Donor search, and the second half of the approve-then-fulfil workflow.
+    //
+    // Three things arrive on the query string: the group being searched for, the usual sort and
+    // page, and optionally a requestId when this was reached by approving a request.
     @GetMapping("/search")
     public String searchDonors(
             @RequestParam(required = false) BloodGroup bloodGroup,
@@ -171,8 +189,9 @@ public class DonorController {
 
         boolean isAdmin = principal != null && principal.getRole() == Role.ADMIN;
 
-        // Searching "on behalf of" an approved request. Admin-only, and ignored once the request
-        // is no longer APPROVED so a stale link cannot reopen a finished job.
+        // Searching on behalf of an approved request, which is what turns this page into a step in
+        // a workflow rather than a lookup. Admin-only, and quietly ignored once the request is no
+        // longer APPROVED, so an old link cannot reopen a job that is already finished.
         if (isAdmin && requestId != null) {
             try {
                 DonationRequest fulfilling = requestService.getRequestById(requestId);
@@ -180,7 +199,8 @@ public class DonorController {
                     model.addAttribute("fulfillingRequest", fulfilling);
                 }
             } catch (ResourceNotFoundException e) {
-                // Deleted since the link was made; fall through to an ordinary search.
+                // Deleted since the link was made. Falling through to an ordinary search is kinder
+                // than a 404, since the search itself is still perfectly valid.
             }
         }
 
@@ -189,7 +209,10 @@ public class DonorController {
                 : SEARCH_SORT_FIELDS_MEMBER;
         SortRequest sorting = SortRequest.of(allowed, sort, dir, "fullName", Sort.Direction.ASC);
 
+        // Nothing is searched until a group is chosen, so arriving with no query string shows the
+        // form and no results rather than the entire donor roster.
         if (bloodGroup != null) {
+            // Compatible donors, not exact matches - see BloodGroup.compatibleDonors().
             Page<User> results = userService.searchCompatibleDonors(bloodGroup,
                     pageSupport.of(page, sorting.toSort()));
             model.addAttribute("results", results.getContent());

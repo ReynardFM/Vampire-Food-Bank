@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+// Signing in and registering.
+//
+// Note there is no method that handles the login form's POST. Spring Security intercepts /login
+// before it ever reaches a controller, checks the password, and redirects. This class only renders
+// the page and reports what happened.
 @Controller
 public class AuthController {
 
@@ -22,6 +27,12 @@ public class AuthController {
         this.userService = userService;
     }
 
+    // ?error and ?logout are appended by Spring Security itself on a failed sign-in and a
+    // successful sign-out, configured in SecurityConfig. required = false because the ordinary
+    // case is neither being present.
+    //
+    // The error message stays vague on purpose. Saying which of the two was wrong would confirm
+    // to a stranger that an email address has an account.
     @GetMapping("/login")
     public String loginPage(
             @RequestParam(value = "error", required = false) String error,
@@ -37,6 +48,9 @@ public class AuthController {
         return "login";
     }
 
+    // The containsAttribute check matters: a rejected submission redirects back here with the
+    // filled-in form already in the model, and overwriting it with a blank one would wipe out
+    // everything the user typed.
     @GetMapping("/register")
     public String registerPage(Model model) {
         if (!model.containsAttribute("registrationDto")) {
@@ -51,15 +65,27 @@ public class AuthController {
             BindingResult result,
             RedirectAttributes redirectAttributes) {
 
+        // @Valid runs the DTO's constraints and collects failures in BindingResult rather than
+        // throwing. BindingResult must be the parameter immediately after the object it belongs to,
+        // or Spring will not connect the two.
+        //
+        // Returning the view rather than redirecting is deliberate: it keeps the submitted values
+        // and the error messages, so the form comes back filled in.
         if (result.hasErrors()) {
             return "register";
         }
 
         try {
             userService.register(dto);
+
+            // A flash attribute survives exactly one redirect and is then discarded, which is what
+            // lets the success message appear on the login page without sticking around on refresh.
             redirectAttributes.addFlashAttribute("success", "Account created! Please log in.");
             return "redirect:/login";
         } catch (EmailAlreadyExistsException e) {
+
+            // Attached to the email field rather than shown as a general error, so it appears
+            // beside the input that caused it.
             result.rejectValue("email", "error.registrationDto", e.getMessage());
             return "register";
         }

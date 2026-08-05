@@ -1,20 +1,42 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--/*
+  Sortable column headings, shared by all five listing tables.
+
+  A fragment is a reusable piece of markup. Another template pulls one in with th:replace, passing
+  arguments the way you would to a method, so the sorting link is written once here rather than
+  copied into every table.
+
+  Note the <table>, <thead> and <tr> around them. A fragment is only the tagged element and what is
+  inside it, so those are never rendered - they are here so a bare <th> sits somewhere legal and
+  this file stays valid HTML that a browser or editor can open on its own.
+
+  These comments use the /* */ form, which Thymeleaf strips while rendering. An ordinary HTML
+  comment would be sent to the browser and be readable in "view source".
+*/-->
 <body>
 <table>
     <thead>
     <tr>
-        <!--
+        <!--/*
           A sortable column heading.
 
             label - the visible column name
-            field - the entity property to sort on; must be in the controller's whitelist
+            field - the property to sort on; must be in the controller's whitelist
             sort  - the property currently sorted on, echoed back by the controller
             dir   - the current direction, "asc" or "desc"
             url   - the listing's own path, e.g. '/admin/donors'
 
-          Clicking the active column flips direction; clicking any other starts it ascending.
-        -->
+          Sorting is done in the database, not in the browser. The heading is a plain link that
+          reloads the page with a different query string, so it works without JavaScript, survives
+          a refresh, and can be bookmarked or shared.
+
+          @{${url}(sort=..., dir=...)} is Thymeleaf's link syntax: the part in brackets becomes the
+          query string, correctly encoded.
+
+          The ternary is what makes a heading toggle. Clicking the column already sorted flips its
+          direction; clicking any other starts it ascending.
+        */-->
         <th th:fragment="sortable(label, field, sort, dir, url)" class="sortable-col">
             <a th:href="@{${url}(sort=${field}, dir=${sort == field and dir == 'asc' ? 'desc' : 'asc'})}"
                th:classappend="${sort == field ? (dir == 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}"
@@ -22,10 +44,13 @@
         </th>
     </tr>
     <tr>
-        <!--
-          As above, but carries the donor search's bloodGroup filter through the link. Without it
-          the first click would drop the filter and empty the results.
-        -->
+        <!--/*
+          As above, but carries donor search's bloodGroup filter through the link.
+
+          A second fragment rather than an optional argument, because Thymeleaf fragments take a
+          fixed number of parameters. Without it the first click on a heading would drop the filter
+          from the URL and the results would come back empty.
+        */-->
         <th th:fragment="sortableFiltered(label, field, sort, dir, url, bloodGroup)" class="sortable-col">
             <a th:href="@{${url}(bloodGroup=${bloodGroup}, sort=${field},
                                  dir=${sort == field and dir == 'asc' ? 'desc' : 'asc'})}"
