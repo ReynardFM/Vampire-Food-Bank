@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+</head>
+<!--/*
+  One day in full: the same four figures as the list, then the rows behind each of them.
+
+  Any date opens, including quiet ones and dates outside the 30-day list, so a report can be linked
+  to or typed directly. An empty day renders empty rather than 404 - there is no date that does not
+  exist.
+*/-->
+<body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
+
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Daily report</div>
+            <h1 th:text="${#temporals.format(report.date, 'EEEE, d MMMM yyyy')}">Tuesday, 4 August 2026</h1>
+            <p>Everything the blood bank recorded on this day.</p>
+        </div>
+        <a class="btn-secondary" th:href="@{/admin/reports}">
+            <i class="fa-solid fa-arrow-left"></i> All reports
+        </a>
+    </div>
+
+    <section class="stats-grid">
+        <article class="stat-card">
+            <i class="fa-solid fa-inbox"></i>
+            <strong th:text="${report.requestsRaised}">0</strong>
+            <span>Requests raised</span>
+        </article>
+        <article class="stat-card">
+            <i class="fa-solid fa-gavel"></i>
+            <strong th:text="${report.requestsDecided}">0</strong>
+            <span>Requests decided</span>
+        </article>
+        <article class="stat-card">
+            <i class="fa-solid fa-droplet"></i>
+            <strong th:text="${report.donations}">0</strong>
+            <span>Donations recorded</span>
+        </article>
+        <article class="stat-card">
+            <i class="fa-solid fa-flask"></i>
+            <strong th:text="${report.unitsCollected}">0</strong>
+            <span>Units collected</span>
+        </article>
+    </section>
+
+    <!--/*
+      A day with nothing on it is a legitimate answer, not an error, so it gets a sentence rather
+      than three empty tables.
+    */-->
+    <section class="surface-card" style="margin-top: 24px;" th:if="${report.empty}">
+        <p class="field-hint">
+            <i class="fa-regular fa-circle-check"></i>
+            Nothing was recorded on this day.
+        </p>
+    </section>
+
+    <div th:unless="${report.empty}">
+        <section class="surface-card table-wrap" style="margin-top: 24px;">
+            <h2 class="section-title">Requests raised</h2>
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Requester</th>
+                    <th>Blood</th>
+                    <th>Units</th>
+                    <th>Hospital</th>
+                    <th>Urgency</th>
+                    <th>Status now</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(requestsRaised)}">
+                    <td class="empty-state" colspan="8">No requests were raised on this day.</td>
+                </tr>
+                <tr th:each="request : ${requestsRaised}">
+                    <td th:text="${#temporals.format(request.requestDate, 'HH:mm')}">09:00</td>
+                    <td th:text="${request.requestedBy.fullName}">Jane Doe</td>
+                    <td><span class="badge badge-blood" th:text="${request.requestedBloodGroup.displayName}">A+</span></td>
+                    <td th:text="${request.unitsNeeded}">1</td>
+                    <td th:text="${request.hospitalName}">Toronto General Hospital</td>
+                    <td th:text="${request.urgencyLevel}">HIGH</td>
+                    <!--/*
+                      Where the request stands now, which is not necessarily where it stood on this
+                      day. A request raised here may well have been decided a week later.
+                    */-->
+                    <td>
+                        <span class="badge"
+                              th:classappend="${'badge-' + #strings.toLowerCase(request.status.name())}"
+                              th:text="${request.status}">PENDING</span>
+                    </td>
+                    <td>
+                        <div class="inline-actions">
+                            <a class="btn-secondary" th:href="@{/requests/{id}(id=${request.id}, from='all')}">View</a>
+                            <!--/*
+                              An approved request that was never fulfilled is unfinished work, and a
+                              report is exactly where you notice one. This picks the fulfilment back
+                              up wherever it was left - the same link the request list offers.
+                            */-->
+                            <a class="btn-success" th:if="${request.status.name() == 'APPROVED'}"
+                               th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id})}">
+                                <i class="fa-solid fa-magnifying-glass"></i> Find donors
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="surface-card table-wrap" style="margin-top: 24px;">
+            <h2 class="section-title">Requests decided</h2>
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Requester</th>
+                    <th>Blood</th>
+                    <th>Units</th>
+                    <th>Raised</th>
+                    <th>Outcome</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(requestsDecided)}">
+                    <td class="empty-state" colspan="7">No requests were decided on this day.</td>
+                </tr>
+                <tr th:each="request : ${requestsDecided}">
+                    <td th:text="${#temporals.format(request.decidedAt, 'HH:mm')}">15:20</td>
+                    <td th:text="${request.requestedBy.fullName}">Jane Doe</td>
+                    <td><span class="badge badge-blood" th:text="${request.requestedBloodGroup.displayName}">A+</span></td>
+                    <td th:text="${request.unitsNeeded}">1</td>
+                    <!--/* How long it waited, which is the figure this table exists to expose. */-->
+                    <td th:text="${#temporals.format(request.requestDate, 'MMM d')}">Jul 28</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${'badge-' + #strings.toLowerCase(request.status.name())}"
+                              th:text="${request.status}">APPROVED</span>
+                    </td>
+                    <td>
+                        <div class="inline-actions">
+                            <a class="btn-secondary" th:href="@{/requests/{id}(id=${request.id}, from='all')}">View</a>
+                            <!--/*
+                              An approved request that was never fulfilled is unfinished work, and a
+                              report is exactly where you notice one. This picks the fulfilment back
+                              up wherever it was left - the same link the request list offers.
+                            */-->
+                            <a class="btn-success" th:if="${request.status.name() == 'APPROVED'}"
+                               th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id})}">
+                                <i class="fa-solid fa-magnifying-glass"></i> Find donors
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="surface-card table-wrap" style="margin-top: 24px;">
+            <h2 class="section-title">Donations recorded</h2>
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Donor</th>
+                    <th>Blood</th>
+                    <th>Units</th>
+                    <th>Location</th>
+                    <th>Fulfils</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(donations)}">
+                    <td class="empty-state" colspan="5">No donations were recorded on this day.</td>
+                </tr>
+                <tr th:each="donation : ${donations}">
+                    <td th:text="${donation.donor.fullName}">Marcus Lee</td>
+                    <td>
+                        <span class="badge badge-blood" th:if="${donation.donor.bloodGroup != null}"
+                              th:text="${donation.donor.bloodGroup.displayName}">O-</span>
+                        <span th:if="${donation.donor.bloodGroup == null}">Not set</span>
+                    </td>
+                    <td th:text="${donation.unitsDonated}">1</td>
+                    <td th:text="${donation.location != null ? donation.location : 'Not recorded'}">Mount Sinai Hospital</td>
+                    <!--/* Null for a walk-in donation that was not collected against any request. */-->
+                    <td>
+                        <a th:if="${donation.linkedRequest != null}" class="btn-secondary"
+                           th:href="@{/requests/{id}(id=${donation.linkedRequest.id}, from='all')}"
+                           th:text="'Request #' + ${donation.linkedRequest.id}">Request #7</a>
+                        <span th:if="${donation.linkedRequest == null}">Walk-in</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Reports - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+</head>
+<!--/*
+  One row per day the blood bank did something, newest first. Clicking a row opens that day in full.
+
+  Days with no activity are left out rather than listed as zeros, so this is a record of what
+  happened rather than a calendar.
+*/-->
+<body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
+
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Administration</div>
+            <h1>Daily Reports</h1>
+            <p>Activity for the last 30 days. Open a day to see the requests and donations behind its figures.</p>
+        </div>
+        <a class="btn-secondary" th:href="@{/dashboard}">
+            <i class="fa-solid fa-arrow-left"></i> Dashboard
+        </a>
+    </div>
+
+    <section class="surface-card table-wrap">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <!--/*
+                  Not sortable, unlike the other listings. The order here is meaningful in itself -
+                  a report is a chronology, and letting it be sorted by unit count would break that.
+                */-->
+                <th>Date</th>
+                <th>Requests raised</th>
+                <th>Requests decided</th>
+                <th>Donations</th>
+                <th>Units collected</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(reports)}">
+                <td class="empty-state" colspan="6">
+                    <i class="fa-regular fa-folder-open"></i> No activity recorded in the last 30 days.
+                </td>
+            </tr>
+            <tr th:each="report : ${reports}">
+                <td>
+                    <strong th:text="${#temporals.format(report.date, 'EEEE, MMM d, yyyy')}">Tuesday, Aug 4, 2026</strong>
+                    <!--/* today is passed in by the controller so the view does no date maths. */-->
+                    <span class="badge badge-today" th:if="${report.date.isEqual(today)}">Today</span>
+                </td>
+                <td th:text="${report.requestsRaised}">0</td>
+                <td th:text="${report.requestsDecided}">0</td>
+                <td th:text="${report.donations}">0</td>
+                <td>
+                    <span class="badge badge-blood" th:if="${report.unitsCollected > 0}"
+                          th:text="${report.unitsCollected} + ' units'">2 units</span>
+                    <span th:if="${report.unitsCollected == 0}">&mdash;</span>
+                </td>
+                <td>
+                    <!--/* The date goes straight into the path, so the URL reads /admin/reports/2026-08-04. */-->
+                    <a class="btn-secondary" th:href="@{/admin/reports/{date}(date=${report.date})}">View report</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Test Guide
 
-36 tests across 9 classes. This explains what each one checks and why it's worth having.
+49 tests across 10 classes. This explains what each one checks and why it's worth having.
 
 ## Running them
 
@@ -91,7 +91,7 @@ sorting.
 - Deactivated accounts disappear from the account listing
 - Registration stores a BCrypt hash, not the plain password, and assigns `DONOR`
 
-### `DonationServiceTest` — 6 tests
+### `DonationServiceTest` — 10 tests
 
 - Recording a donation updates the donor's `lastDonationDate`
 - **A backdated donation does not drag `lastDonationDate` backwards.** Donations are often
@@ -105,6 +105,35 @@ sorting.
   not close out a request raised for an O− patient
 - A donor with no blood group on file cannot link to anything, since nothing is known
   about who they can give to
+- **A partial donation leaves the request APPROVED.** A request can ask for five units
+  while one person gives one, so closing it on the first donation recorded the request as
+  served with the patient still needing blood
+- **The donation that completes a request fulfils it** — two units then one, against a
+  three-unit request
+- Over-collecting still fulfils the request rather than leaving it open forever
+- **A request cannot be fulfilled by the person who raised it.** Somebody who needs blood
+  is not in a position to give it, and allowing it would close the request as served while
+  the patient still needed blood
+
+### `ReportServiceTest` — 9 tests
+
+The daily reports count two different things — when a request *arrived* and when it was
+*decided* — and confusing those is exactly the bug that had the dashboard reporting old
+requests as today's work. These pin the separation down:
+
+- **A request raised on one day and approved on another counts once in each day's report**,
+  not twice in either
+- **A request with no decision time is never counted as decided.** Pending requests, and
+  rows that predate the `decided_at` column, must stay out of every day's figures
+- **A decision at 23:59 belongs to that day, not the next.** The day window runs to the
+  last instant before midnight; comparing on the date alone would drop everything after 00:00
+- Donations and their unit totals are both counted
+- Quiet days are left out of the list rather than listed as rows of zeros
+- The list is newest first
+- **A day outside the 30-day window is absent from the list but still opens** with its real
+  figures, since any date should be reachable
+- A day with nothing on it reports itself as empty
+- The detail page gets the rows behind each figure, not just the counts
 
 ### `DatabaseSeederTest` — 3 tests
 

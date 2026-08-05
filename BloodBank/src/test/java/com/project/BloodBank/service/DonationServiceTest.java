@@ -42,27 +42,52 @@ class DonationServiceTest {
 
     private User donor;
 
+    // Two people, because a request cannot be fulfilled by whoever raised it. Every request built
+    // by the helpers below belongs to the requester, so the donor is always a third party - which
+    // is the ordinary case, and keeps the self-donation rule from firing in tests about other things.
+    private User requester;
+
     @BeforeEach
     void setUp() {
-        donor = new User();
-        donor.setEmail("donor-history@test.local");
-        donor.setFullName("History Donor");
-        donor.setPassword(passwordEncoder.encode("Password123!"));
-        donor.setRole(Role.DONOR);
-        donor.setActive(true);
-        donor.setBloodGroup(BloodGroup.A_POSITIVE);
-        donor = userRepository.save(donor);
+        donor = userRepository.save(
+                person("donor-history@test.local", "History Donor", BloodGroup.A_POSITIVE));
+        requester = userRepository.save(
+                person("requester@test.local", "Request Raiser", BloodGroup.A_POSITIVE));
+    }
+
+    private User person(String email, String name, BloodGroup group) {
+        User user = new User();
+        user.setEmail(email);
+        user.setFullName(name);
+        user.setPassword(passwordEncoder.encode("Password123!"));
+        user.setRole(Role.DONOR);
+        user.setActive(true);
+        user.setBloodGroup(group);
+        return user;
     }
 
     private DonationRequest request(RequestStatus status) {
         return request(status, BloodGroup.A_POSITIVE);
     }
 
+    private DonationRequest request(RequestStatus status, int unitsNeeded) {
+        return request(status, BloodGroup.A_POSITIVE, unitsNeeded);
+    }
+
     private DonationRequest request(RequestStatus status, BloodGroup requestedGroup) {
+        return request(status, requestedGroup, 1);
+    }
+
+    private DonationRequest request(RequestStatus status, BloodGroup requestedGroup, int unitsNeeded) {
+        return request(status, requestedGroup, unitsNeeded, requester);
+    }
+
+    private DonationRequest request(RequestStatus status, BloodGroup requestedGroup,
+                                    int unitsNeeded, User raisedBy) {
         DonationRequest request = new DonationRequest();
-        request.setRequestedBy(donor);
+        request.setRequestedBy(raisedBy);
         request.setRequestedBloodGroup(requestedGroup);
-        request.setUnitsNeeded(1);
+        request.setUnitsNeeded(unitsNeeded);
         request.setHospitalName("Test Hospital");
         request.setUrgencyLevel(UrgencyLevel.HIGH);
         request.setStatus(status);
@@ -70,9 +95,13 @@ class DonationServiceTest {
     }
 
     private DonationRecordDto dto(LocalDate on, Long linkedRequestId) {
+        return dto(on, linkedRequestId, 1);
+    }
+
+    private DonationRecordDto dto(LocalDate on, Long linkedRequestId, int units) {
         DonationRecordDto dto = new DonationRecordDto();
         dto.setDonationDate(on);
-        dto.setUnitsDonated(1);
+        dto.setUnitsDonated(units);
         dto.setLocation("Test Hospital");
         dto.setLinkedRequestId(linkedRequestId);
         return dto;
@@ -145,6 +174,68 @@ class DonationServiceTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(requestRepository.findById(incompatible.getId()))
+                .get()
+                .extracting(DonationRequest::getStatus)
+                .isEqualTo(RequestStatus.APPROVED);
+    }
+
+    /**
+     * A request can ask for more units than one person gives. Closing it on the first donation
+     * recorded a five-unit request as served by a single unit, with the patient still needing blood.
+     */
+    @Test
+    void aPartialDonationLeavesTheRequestApproved() {
+        DonationRequest approved = request(RequestStatus.APPROVED, 5);
+
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 2), donor);
+
+        assertThat(requestRepository.findById(approved.getId()))
+                .get()
+                .extracting(DonationRequest::getStatus)
+                .isEqualTo(RequestStatus.APPROVED);
+        assertThat(donationService.collectedFor(approved.getId())).isEqualTo(2);
+    }
+
+    @Test
+    void theDonationThatCompletesARequestFulfilsIt() {
+        DonationRequest approved = request(RequestStatus.APPROVED, 3);
+
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 2), donor);
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 1), donor);
+
+        assertThat(requestRepository.findById(approved.getId()))
+                .get()
+                .extracting(DonationRequest::getStatus)
+                .isEqualTo(RequestStatus.FULFILLED);
+    }
+
+    /** Over-collecting still closes the request rather than leaving it open forever. */
+    @Test
+    void collectingMoreThanNeededStillFulfilsTheRequest() {
+        DonationRequest approved = request(RequestStatus.APPROVED, 2);
+
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 3), donor);
+
+        assertThat(requestRepository.findById(approved.getId()))
+                .get()
+                .extracting(DonationRequest::getStatus)
+                .isEqualTo(RequestStatus.FULFILLED);
+    }
+
+    /**
+     * Somebody who needs blood is not in a position to give it. Allowing this would close a request
+     * as served while the patient still needed blood.
+     */
+    @Test
+    void aRequestCannotBeFulfilledByThePersonWhoRaisedIt() {
+        // Raised by the donor themselves, unlike every other request in this class.
+        DonationRequest own = request(RequestStatus.APPROVED, BloodGroup.A_POSITIVE, 1, donor);
+
+        assertThatThrownBy(() ->
+                donationService.recordDonation(dto(LocalDate.now(), own.getId()), donor))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(requestRepository.findById(own.getId()))
                 .get()
                 .extracting(DonationRequest::getStatus)
                 .isEqualTo(RequestStatus.APPROVED);

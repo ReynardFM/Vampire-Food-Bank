@@ -6,6 +6,7 @@ import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.RequestStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,8 +21,11 @@ import java.util.List;
 public interface DonationRequestRepository extends JpaRepository<DonationRequest, Long>
 {
     // Backs the record-donation dropdown: approved requests a given donor could actually fulfil.
-    List<DonationRequest> findByStatusAndRequestedBloodGroupIn(
-            RequestStatus status, Collection<BloodGroup> requestedBloodGroups);
+    //
+    // RequestedByNot excludes the donor's own requests. Somebody who needs blood cannot supply it,
+    // so offering their own request would only lead to the service refusing it.
+    List<DonationRequest> findByStatusAndRequestedBloodGroupInAndRequestedByNot(
+            RequestStatus status, Collection<BloodGroup> requestedBloodGroups, User requestedBy);
 
     // The admin listings print requestedBy.fullName on every row, and requestedBy is LAZY, so
     // without an entity graph each row costs an extra query - the N+1 problem.
@@ -38,6 +42,22 @@ public interface DonationRequestRepository extends JpaRepository<DonationRequest
     List<DonationRequest> findByRequestedBy(User user);
     Page<DonationRequest> findByRequestedBy(User user, Pageable pageable);
     long countByStatus(RequestStatus status);
+
+    // --- Daily reports ---
+    // Requests that arrived, and requests that were decided, within a window. Two methods because
+    // they answer different questions: a request raised three weeks ago but approved this morning
+    // belongs to this morning's report, not to the day it arrived.
+    //
+    // Between is inclusive at both ends, and rows with a null decidedAt are excluded automatically -
+    // which is what keeps pending requests, and the legacy rows with no decision time, out of the
+    // decided figures.
+    //
+    // The entity graph is here because the report tables print requestedBy.fullName on every row.
+    @EntityGraph(attributePaths = "requestedBy")
+    List<DonationRequest> findByRequestDateBetween(LocalDateTime start, LocalDateTime end, Sort sort);
+
+    @EntityGraph(attributePaths = "requestedBy")
+    List<DonationRequest> findByDecidedAtBetween(LocalDateTime start, LocalDateTime end, Sort sort);
 
     // --- Dashboard counts ---
     // @Query is JPQL, not SQL: it names entities and fields, not tables and columns. :since is

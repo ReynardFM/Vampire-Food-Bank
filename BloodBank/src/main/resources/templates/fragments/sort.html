@@ -45,14 +45,19 @@
     </tr>
     <tr>
         <!--/*
-          As above, but carries donor search's bloodGroup filter through the link.
+          As above, but carries donor search's state through the link.
 
-          A second fragment rather than an optional argument, because Thymeleaf fragments take a
-          fixed number of parameters. Without it the first click on a heading would drop the filter
-          from the URL and the results would come back empty.
+          A second fragment rather than optional arguments, because Thymeleaf fragments take a fixed
+          number of parameters. Without it, the first click on a heading would drop the filter from
+          the URL and the results would come back empty.
+
+          requestId is the request being fulfilled, and may be null on an ordinary search. Thymeleaf
+          leaves a null parameter out of the URL entirely, so one fragment serves both cases.
+          Carrying it matters: losing it mid-search silently ends the fulfilment session, and the
+          administrator has to pick the request out of a dropdown again.
         */-->
-        <th th:fragment="sortableFiltered(label, field, sort, dir, url, bloodGroup)" class="sortable-col">
-            <a th:href="@{${url}(bloodGroup=${bloodGroup}, sort=${field},
+        <th th:fragment="sortableFiltered(label, field, sort, dir, url, bloodGroup, requestId)" class="sortable-col">
+            <a th:href="@{${url}(bloodGroup=${bloodGroup}, requestId=${requestId}, sort=${field},
                                  dir=${sort == field and dir == 'asc' ? 'desc' : 'asc'})}"
                th:classappend="${sort == field ? (dir == 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}"
                th:text="${label}">Column</a>

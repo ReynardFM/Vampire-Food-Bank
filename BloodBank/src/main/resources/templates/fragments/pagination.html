@@ -49,11 +49,17 @@
     <span th:unless="${!page.last}" class="pager-spacer"></span>
 </nav>
 
-<!--/* As above, but keeps the donor search's bloodGroup filter in the link. */-->
-<nav th:fragment="pagerFiltered(page, sort, dir, url, bloodGroup)" class="pager"
+<!--/*
+  As above, but keeps donor search's state in the link: the blood group being searched for, and the
+  request being fulfilled if there is one.
+
+  requestId may be null, and Thymeleaf leaves a null parameter out of the URL, so this serves both
+  an ordinary search and a fulfilment session. Turning the page must not end that session.
+*/-->
+<nav th:fragment="pagerFiltered(page, sort, dir, url, bloodGroup, requestId)" class="pager"
      th:if="${page != null and page.totalPages > 1}">
     <a class="btn-secondary" th:if="${!page.first}"
-       th:href="@{${url}(bloodGroup=${bloodGroup}, page=${page.number - 1}, sort=${sort}, dir=${dir})}">
+       th:href="@{${url}(bloodGroup=${bloodGroup}, requestId=${requestId}, page=${page.number - 1}, sort=${sort}, dir=${dir})}">
         <i class="fa-solid fa-arrow-left"></i> Previous
     </a>
     <span th:unless="${!page.first}" class="pager-spacer"></span>
@@ -65,7 +71,7 @@
     </span>
 
     <a class="btn-secondary" th:if="${!page.last}"
-       th:href="@{${url}(bloodGroup=${bloodGroup}, page=${page.number + 1}, sort=${sort}, dir=${dir})}">
+       th:href="@{${url}(bloodGroup=${bloodGroup}, requestId=${requestId}, page=${page.number + 1}, sort=${sort}, dir=${dir})}">
         Next <i class="fa-solid fa-arrow-right"></i>
     </a>
     <span th:unless="${!page.last}" class="pager-spacer"></span>

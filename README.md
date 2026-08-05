@@ -76,7 +76,8 @@ bloodbank.page-size=25
 group, raise a blood request, and view your own request history.
 
 **As an administrator** — review the pending queue and approve or reject requests, browse every
-request regardless of status, manage accounts, and record donations on a donor's behalf.
+request regardless of status, read the daily activity reports, manage accounts, and record
+donations on a donor's behalf.
 Recording a donation updates that donor's history and, if it is linked to an approved request,
 marks the request fulfilled.
 
@@ -96,6 +97,8 @@ marks the request fulfilled.
 | `/admin/pending` | Admin | Approve / reject queue |
 | `/admin/requests` | Admin | Every request, any status |
 | `/admin/donors` | Admin | Account directory |
+| `/admin/reports` | Admin | Daily activity, last 30 days |
+| `/admin/reports/{date}` | Admin | One day in full, e.g. `2026-08-04` |
 | `/donations/record/{donorId}` | Admin | Record a donation |
 
 On sign-in, administrators land on `/dashboard` and everyone else on `/donor/profile`.

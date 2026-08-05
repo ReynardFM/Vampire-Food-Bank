@@ -56,6 +56,7 @@ public class DonationService {
                 throw new IllegalStateException("That request is no longer approved, so it cannot be linked.");
             }
 
+            requireNotOwnRequest(donor, linkedRequest);
             requireCompatible(donor, linkedRequest);
             donation.setLinkedRequest(linkedRequest);
         }
@@ -72,12 +73,49 @@ public class DonationService {
         }
 
         // Where the two halves of the app meet: recording a donation is the only thing that marks a
-        // request FULFILLED.
+        // request FULFILLED - and only once enough blood has actually been collected for it.
         if (donation.getLinkedRequest() != null) {
-            donationRequestService.markAsFulfilled(donation.getLinkedRequest().getId());
+            closeIfFullyCollected(donation.getLinkedRequest());
         }
 
         return savedDonation;
+    }
+
+    // Marks a request fulfilled once the units collected for it reach what was asked for, and
+    // leaves it approved otherwise.
+    //
+    // A request can ask for several units while one person gives one, so a single donation is often
+    // only part of the answer. Closing the request on the first one recorded a five-unit request as
+    // served by a single unit, and dropped it out of the queue with the patient still needing blood.
+    //
+    // The sum includes the donation just saved. Hibernate flushes pending writes before running a
+    // query, so the row is already in the database by the time this counts it.
+    private void closeIfFullyCollected(DonationRequest request) {
+        if (collectedFor(request.getId()) >= request.getUnitsNeeded()) {
+            donationRequestService.markAsFulfilled(request.getId());
+        }
+    }
+
+    // Units collected against a request so far. Also read by the screens that show progress.
+    @Transactional(readOnly = true)
+    public int collectedFor(Long requestId) {
+        Long collected = donationRepository.sumUnitsCollectedFor(requestId);
+        return collected != null ? collected.intValue() : 0;
+    }
+
+    // Refuses a donation recorded against the donor's own request.
+    //
+    // Somebody who needs blood is not in a position to give it, so a request being closed out by
+    // the person who raised it is either a mistake or a way of quietly clearing the queue. Either
+    // way the request would be marked served while the patient still needs blood.
+    //
+    // Checked here rather than only hidden in the form, because the request id is posted from the
+    // browser and the recording URL can be reached directly.
+    private void requireNotOwnRequest(User donor, DonationRequest request) {
+        if (request.getRequestedBy().getId().equals(donor.getId())) {
+            throw new IllegalStateException(
+                    "A request cannot be fulfilled by the person who raised it.");
+        }
     }
 
     // Refuses a link whose patient could not safely receive this blood.

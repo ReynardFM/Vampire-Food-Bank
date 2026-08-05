@@ -57,9 +57,14 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     // daysAgo rather than a fixed date, so seeded history is always relative to when it was
     // created and the dashboard has recent activity whenever the project is set up.
+    //
+    // decidedDaysAgo is separate from daysAgo, and must be smaller or equal - a request cannot be
+    // decided before it arrived. Keeping them apart is what gives the daily reports something real
+    // to show: a request raised on one day and approved on another is the ordinary case, and the
+    // reports exist precisely to tell those two days apart. Ignored for a pending request.
     private record RequestSeed(String email, BloodGroup group, int units, String hospital,
                                String hospitalAddress, UrgencyLevel urgency, RequestStatus status,
-                               int daysAgo, String notes) {
+                               int daysAgo, int decidedDaysAgo, String notes) {
     }
 
     // linkedRequest indexes into the saved request list, or -1 for an unlinked walk-in donation.
@@ -209,8 +214,17 @@ public class DatabaseSeeder implements CommandLineRunner {
         // Keyed off a seed-owned account rather than the table totals: requests you raise yourself
         // must not count as "already seeded", or one hand-made request would block the whole set.
         User marker = required(MARKER_EMAIL);
-        if (!requestRepository.findByRequestedBy(marker).isEmpty()
-                || !donationRepository.findByDonor(marker).isEmpty()) {
+        boolean hasRequests = !requestRepository.findByRequestedBy(marker).isEmpty();
+        boolean hasDonations = !donationRepository.findByDonor(marker).isEmpty();
+
+        if (hasRequests || hasDonations) {
+            // Logged rather than skipped in silence. This guard covers requests and donations
+            // together, so a database holding one but not the other never gets the missing half -
+            // and without a line here, the only symptom is charts that read zero for no visible
+            // reason. If this fires when you expected a full seed, the database was not empty.
+            log.info("History already present for '{}' (requests: {}, donations: {}); skipping. "
+                            + "Drop the database and restart if you wanted it rebuilt.",
+                    MARKER_EMAIL, hasRequests, hasDonations);
             return;
         }
 
@@ -229,11 +243,20 @@ public class DatabaseSeeder implements CommandLineRunner {
             // @PrePersist only fills this when null, so the explicit date survives.
             LocalDateTime raisedAt = LocalDateTime.now().minusDays(seed.daysAgo()).withHour(9);
             request.setRequestDate(raisedAt);
+
             // Anything already decided needs a decision time, or the history reads as though it
-            // resolved itself. Deliberately backdated so "decided today" starts at zero and only
-            // moves when an administrator actually acts.
+            // resolved itself.
+            //
+            // This used to be raisedAt.plusHours(6), which meant every request was decided on the
+            // day it arrived. That made the daily reports meaningless - "raised" and "decided"
+            // always fell on the same day, and the waiting time the report shows was always zero.
+            // Each seed now carries its own decision day.
+            //
+            // Afternoon rather than morning, so a request raised and decided on the same day still
+            // reads in the right order.
             if (seed.status() != RequestStatus.PENDING) {
-                request.setDecidedAt(raisedAt.plusHours(6));
+                request.setDecidedAt(
+                        LocalDateTime.now().minusDays(seed.decidedDaysAgo()).withHour(14));
             }
             request.setNotes(seed.notes());
             saved.add(requestRepository.save(request));
@@ -253,56 +276,74 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     // A spread of statuses and urgencies, so every filter, badge colour and sort order has
-    // something to show. Indexes 3, 7 and 10 are the FULFILLED ones the donations link back to -
-    // which is why reordering this list would break donationRoster().
+    // something to show.
+    //
+    // Positions matter, because donationRoster() links to these by index: 3, 7 and 10 are the
+    // FULFILLED ones, and 9 is an APPROVED request that has had part of its blood collected.
+    // Reordering this list would attach donations to the wrong requests.
+    //
+    // The decided days are chosen to fall on different days from the raises, so the daily reports
+    // show requests arriving on one day and being decided on another - which is the whole reason
+    // those two figures are counted separately.
     private List<RequestSeed> requestRoster() {
         return List.of(
                 new RequestSeed("jane.doe@example.com", BloodGroup.A_POSITIVE, 2, "Toronto General Hospital",
                         "200 Elizabeth Street, Toronto, ON", UrgencyLevel.HIGH, RequestStatus.PENDING,
-                        1, "Scheduled surgery on Friday."),
+                        1, 0, "Scheduled surgery on Friday."),
                 // Deliberately not daysAgo = 0. The seeder stamps a real timestamp once and it never
                 // moves again, so a request raised "today" is really raised on whatever day the
                 // database was first seeded - which leaves the dashboard's today counters showing
                 // activity nobody performed, and makes it impossible to tell seed data from your own.
                 new RequestSeed("priya.nair@example.com", BloodGroup.O_NEGATIVE, 4, "Mount Sinai Hospital",
                         "600 University Avenue, Toronto, ON", UrgencyLevel.CRITICAL, RequestStatus.PENDING,
-                        1, "Trauma case, needs universal donor units."),
+                        1, 0, "Trauma case, needs universal donor units."),
                 new RequestSeed("noah.bergman@example.com", BloodGroup.B_NEGATIVE, 1, "Markham Stouffville Hospital",
                         "381 Church Street, Markham, ON", UrgencyLevel.MEDIUM, RequestStatus.PENDING,
-                        3, null),
+                        3, 0, null),
+                // Fulfilled requests are decided on the day their linked donation was collected -
+                // that is what fulfilment means, so any other date would contradict the donation.
                 new RequestSeed("jane.doe@example.com", BloodGroup.A_POSITIVE, 1, "Sunnybrook Hospital",
                         "2075 Bayview Avenue, Toronto, ON", UrgencyLevel.HIGH, RequestStatus.FULFILLED,
-                        25, "Closed out after collection."),
+                        25, 20, "Closed out after collection."),
                 new RequestSeed("marcus.lee@example.com", BloodGroup.B_POSITIVE, 1, "St. Michael's Hospital",
                         "30 Bond Street, Toronto, ON", UrgencyLevel.MEDIUM, RequestStatus.APPROVED,
-                        4, null),
+                        4, 3, null),
                 new RequestSeed("aisha.khan@example.com", BloodGroup.AB_POSITIVE, 3, "Trillium Health Partners",
                         "100 Queensway West, Mississauga, ON", UrgencyLevel.LOW, RequestStatus.REJECTED,
-                        9, "Duplicate of an earlier request."),
+                        9, 7, "Duplicate of an earlier request."),
                 new RequestSeed("hana.park@example.com", BloodGroup.A_NEGATIVE, 2, "Toronto Western Hospital",
                         "399 Bathurst Street, Toronto, ON", UrgencyLevel.HIGH, RequestStatus.APPROVED,
-                        6, "Patient scheduled for transfusion."),
+                        6, 5, "Patient scheduled for transfusion."),
                 new RequestSeed("aisha.khan@example.com", BloodGroup.O_POSITIVE, 2, "Trillium Health Partners",
                         "100 Queensway West, Mississauga, ON", UrgencyLevel.CRITICAL, RequestStatus.FULFILLED,
-                        45, null),
+                        45, 45, null),
                 new RequestSeed("mei.tanaka@example.com", BloodGroup.AB_NEGATIVE, 1, "Mount Sinai Hospital",
                         "600 University Avenue, Toronto, ON", UrgencyLevel.LOW, RequestStatus.REJECTED,
-                        60, "Requested group not required at this time."),
+                        60, 58, "Requested group not required at this time."),
+                // Index 9. Approved, and one of its three units already collected - the seeded
+                // example of a partly filled request.
                 new RequestSeed("kofi.mensah@example.com", BloodGroup.O_NEGATIVE, 3, "Humber River Hospital",
                         "1235 Wilson Avenue, North York, ON", UrgencyLevel.CRITICAL, RequestStatus.APPROVED,
-                        2, "Standing order for the trauma unit."),
+                        2, 1, "Standing order for the trauma unit."),
                 new RequestSeed("sofia.rossi@example.com", BloodGroup.A_POSITIVE, 1, "William Osler Health",
                         "2100 Bovaird Drive, Brampton, ON", UrgencyLevel.MEDIUM, RequestStatus.FULFILLED,
-                        90, null),
+                        90, 90, null),
                 new RequestSeed("liam.murphy@example.com", BloodGroup.O_POSITIVE, 2, "Michael Garron Hospital",
                         "825 Coxwell Avenue, Toronto, ON", UrgencyLevel.LOW, RequestStatus.PENDING,
-                        7, "Non-urgent, flexible on timing.")
+                        7, 0, "Non-urgent, flexible on timing.")
         );
     }
 
     /** Spread across roughly a year, with several in the current month so the dashboard is alive. */
     private List<DonationSeed> donationRoster() {
         return List.of(
+                // One unit against request 9, which needs three. That request stays APPROVED, so a
+                // fresh database has a worked example of a partly filled request: its detail page
+                // reads "1 of 3 collected" and it is still offered for fulfilment.
+                //
+                // Marcus is O-, and request 9 is for an O- patient, who can receive only O-. A
+                // donor of any other group here would be refused by DonationService.
+                new DonationSeed("marcus.lee@example.com", 1, 1, "Humber River Hospital", 9),
                 new DonationSeed("priya.nair@example.com", 2, 2, "Mount Sinai Hospital", -1),
                 new DonationSeed("liam.murphy@example.com", 4, 1, "Michael Garron Hospital", -1),
                 new DonationSeed("kofi.mensah@example.com", 6, 2, "Humber River Hospital", -1),

@@ -57,7 +57,8 @@
                 &middot;
                 <span th:text="${fulfillingRequest.requestedBloodGroup.displayName}">A+</span>
                 &middot;
-                <span th:text="${fulfillingRequest.unitsNeeded}">2</span> unit(s)
+                <span th:text="${unitsOutstanding}">2</span> of
+                <span th:text="${fulfillingRequest.unitsNeeded}">2</span> unit(s) still needed
                 for <span th:text="${fulfillingRequest.requestedBy.fullName}">Jane Doe</span>
             </strong>
             <span th:text="${fulfillingRequest.hospitalName}">Toronto General Hospital</span>
@@ -79,6 +80,14 @@
           That is also what lets approving a request link straight into a filled-in search.
         */-->
         <form th:action="@{/donor/search}" method="get">
+            <!--/*
+              The request being fulfilled has to ride along, or submitting this form rebuilds the
+              URL from the blood group alone and quietly ends the fulfilment session - leaving the
+              administrator to find the request again in a dropdown. Only present when there is one.
+            */-->
+            <input type="hidden" name="requestId"
+                   th:if="${fulfillingRequest != null}"
+                   th:value="${fulfillingRequest.id}">
             <div class="form-grid">
                 <div class="form-field">
                     <label for="bloodGroup">Blood group needed</label>
@@ -126,8 +135,8 @@
         <table class="data-table" th:with="isAdmin=${user != null and user.role.name() == 'ADMIN'}">
             <thead>
             <tr>
-                <th th:replace="~{fragments/sort :: sortableFiltered('Donor', 'fullName', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
-                <th th:replace="~{fragments/sort :: sortableFiltered('Blood group', 'bloodGroup', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Donor', 'fullName', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Blood group', 'bloodGroup', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
                 <!--/*
                   The wrapper is not decoration. Thymeleaf applies its attributes in a fixed order,
                   and th:replace runs before th:if - so putting both on one tag would replace the
@@ -135,11 +144,11 @@
                   around it is the way to make it apply.
                 */-->
                 <th:block th:if="${isAdmin}">
-                    <th th:replace="~{fragments/sort :: sortableFiltered('Phone', 'phoneNumber', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                    <th th:replace="~{fragments/sort :: sortableFiltered('Phone', 'phoneNumber', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
                 </th:block>
-                <th th:replace="~{fragments/sort :: sortableFiltered('Last donation', 'lastDonationDate', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Last donation', 'lastDonationDate', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
                 <th:block th:if="${isAdmin}">
-                    <th th:replace="~{fragments/sort :: sortableFiltered('Address', 'address', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></th>
+                    <th th:replace="~{fragments/sort :: sortableFiltered('Address', 'address', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
                     <th>Actions</th>
                 </th:block>
             </tr>
@@ -177,7 +186,7 @@
         </table>
     </section>
 
-    <nav th:replace="~{fragments/pagination :: pagerFiltered(${page}, ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup})}"></nav>
+    <nav th:replace="~{fragments/pagination :: pagerFiltered(${page}, ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></nav>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

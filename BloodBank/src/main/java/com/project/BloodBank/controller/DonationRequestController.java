@@ -6,6 +6,7 @@ import com.project.BloodBank.model.User;
 import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.UrgencyLevel;
 import com.project.BloodBank.service.DonationRequestService;
+import com.project.BloodBank.service.DonationService;
 import com.project.BloodBank.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -28,12 +29,14 @@ public class DonationRequestController {
 
     private final DonationRequestService requestService;
     private final UserService userService;
+    private final DonationService donationService;
     private final PageSupport pageSupport;
 
     public DonationRequestController(DonationRequestService requestService, UserService userService,
-                                     PageSupport pageSupport) {
+                                     DonationService donationService, PageSupport pageSupport) {
         this.requestService = requestService;
         this.userService = userService;
+        this.donationService = donationService;
         this.pageSupport = pageSupport;
     }
 
@@ -146,6 +149,9 @@ public class DonationRequestController {
                     : MY_REQUESTS;
 
             model.addAttribute("request", request);
+            // A request can need more units than one donation provides, so the detail page shows
+            // how far along it is rather than only what was asked for.
+            model.addAttribute("unitsCollected", donationService.collectedFor(request.getId()));
             model.addAttribute("backUrl", back.url());
             model.addAttribute("backLabel", back.label());
             return "requests/detail";

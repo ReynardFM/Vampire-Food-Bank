@@ -197,6 +197,10 @@ public class DonorController {
                 DonationRequest fulfilling = requestService.getRequestById(requestId);
                 if (fulfilling.getStatus() == RequestStatus.APPROVED) {
                     model.addAttribute("fulfillingRequest", fulfilling);
+                    // How much is still outstanding, so the banner says what is actually left to
+                    // collect rather than repeating the original figure on every visit.
+                    model.addAttribute("unitsOutstanding",
+                            fulfilling.getUnitsNeeded() - donationService.collectedFor(fulfilling.getId()));
                 }
             } catch (ResourceNotFoundException e) {
                 // Deleted since the link was made. Falling through to an ordinary search is kinder

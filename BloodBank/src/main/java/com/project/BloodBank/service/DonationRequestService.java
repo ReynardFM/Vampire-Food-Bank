@@ -63,17 +63,21 @@ public class DonationRequestService {
         return donationRequestRepository.findAll(pageable);
     }
 
-    // Approved requests a donor of this group could actually fulfil, for the record-donation
-    // dropdown. Empty for a donor with no blood group on file, since nothing is known about who
-    // they can give to and offering them everything would be a guess.
+    // Approved requests this donor could actually fulfil, for the record-donation dropdown.
+    //
+    // Two things narrow it: compatibility, and the donor's own requests being excluded. Empty for a
+    // donor with no blood group on file, since nothing is known about who they can give to and
+    // offering them everything would be a guess.
     @Transactional(readOnly = true)
-    public List<DonationRequest> getApprovedRequestsFor(BloodGroup donorGroup) {
+    public List<DonationRequest> getApprovedRequestsFor(User donor) {
+        BloodGroup donorGroup = donor.getBloodGroup();
+
         if (donorGroup == null) {
             return List.of();
         }
 
-        return donationRequestRepository.findByStatusAndRequestedBloodGroupIn(
-                RequestStatus.APPROVED, donorGroup.compatibleRecipients());
+        return donationRequestRepository.findByStatusAndRequestedBloodGroupInAndRequestedByNot(
+                RequestStatus.APPROVED, donorGroup.compatibleRecipients(), donor);
     }
 
     @Transactional(readOnly = true)

@@ -127,7 +127,6 @@ public class DonationController {
         // Only the requests this donor could actually fulfil. Offering every approved request
         // invited linking an A+ donation to an O- patient, which recordDonation now refuses -
         // better not to present the choice at all than to reject it after the fact.
-        model.addAttribute("approvedRequests",
-                requestService.getApprovedRequestsFor(donor.getBloodGroup()));
+        model.addAttribute("approvedRequests", requestService.getApprovedRequestsFor(donor));
     }
 }

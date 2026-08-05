@@ -4,6 +4,8 @@ import com.project.BloodBank.model.Donation;
 import com.project.BloodBank.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +21,23 @@ public interface DonationRepository extends JpaRepository<Donation, Long>{
     List<Donation> findByDonor(User donor);
     Page<Donation> findByDonor(User donor, Pageable pageable);
     List<Donation> findByDonorOrderByDonationDateDesc(User donor);
+
+    // Donations collected within a window, for the daily reports.
+    //
+    // Both associations are fetched because the report prints the donor's name and, where there is
+    // one, the request the donation closed - and both are LAZY, so each row would otherwise cost
+    // two more queries.
+    @EntityGraph(attributePaths = {"donor", "linkedRequest"})
+    List<Donation> findByDonationDateBetween(LocalDate start, LocalDate end, Sort sort);
+
+    // How many units have been collected against one request so far, across every donation linked
+    // to it. Used to decide whether the request is finished.
+    //
+    // Returns null rather than zero when nothing is linked yet, because SQL's SUM over no rows is
+    // null. COALESCE could hide that here, but the types it would have to reconcile are awkward in
+    // JPQL, so the caller handles the null instead - which is at least impossible to overlook.
+    @Query("SELECT SUM(d.unitsDonated) FROM Donation d WHERE d.linkedRequest.id = :requestId")
+    Long sumUnitsCollectedFor(@Param("requestId") Long requestId);
 
     // CURRENT_DATE is evaluated by the database on every call, so this follows the calendar without
     // the application having to pass a date in.
