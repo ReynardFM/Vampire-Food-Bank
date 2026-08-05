@@ -2,6 +2,7 @@ package com.project.BloodBank.repository;
 
 import com.project.BloodBank.model.DonationRequest;
 import com.project.BloodBank.model.User;
+import com.project.BloodBank.model.enums.BloodGroup;
 import com.project.BloodBank.model.enums.RequestStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,18 +12,22 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
+// Database access for blood requests. Mostly derived queries, plus a few counting queries that are
+// written out because Spring Data cannot express grouping from a method name.
 public interface DonationRequestRepository extends JpaRepository<DonationRequest, Long>
 {
-    List<DonationRequest> findByStatus(RequestStatus status);
+    // Backs the record-donation dropdown: approved requests a given donor could actually fulfil.
+    List<DonationRequest> findByStatusAndRequestedBloodGroupIn(
+            RequestStatus status, Collection<BloodGroup> requestedBloodGroups);
 
-    /*
-     * The admin listings print requestedBy.fullName on every row. requestedBy is LAZY, so without
-     * an entity graph each row costs an extra query. An @EntityGraph is used rather than a JPQL
-     * JOIN FETCH because these methods also take a Sort, and Spring Data applies sorting to a
-     * derived query cleanly without having to alias anything.
-     */
+    // The admin listings print requestedBy.fullName on every row, and requestedBy is LAZY, so
+    // without an entity graph each row costs an extra query - the N+1 problem.
+    //
+    // @EntityGraph rather than a JPQL JOIN FETCH because these also take a Sort, which Spring Data
+    // applies to a derived query without needing anything aliased.
     @EntityGraph(attributePaths = "requestedBy")
     Page<DonationRequest> findByStatus(RequestStatus status, Pageable pageable);
 
@@ -34,6 +39,13 @@ public interface DonationRequestRepository extends JpaRepository<DonationRequest
     Page<DonationRequest> findByRequestedBy(User user, Pageable pageable);
     long countByStatus(RequestStatus status);
 
+    // --- Dashboard counts ---
+    // @Query is JPQL, not SQL: it names entities and fields, not tables and columns. :since is
+    // bound by @Param, which must be spelled out - without it the parameter silently fails to bind.
+    //
+    // These return Object[] because they select two things at once, a status and its count. The
+    // service turns each row into a map entry.
+
     @Query("SELECT r.status, COUNT(r) FROM DonationRequest r GROUP BY r.status")
     List<Object[]> countGroupedByStatus();
 
@@ -43,12 +55,20 @@ public interface DonationRequestRepository extends JpaRepository<DonationRequest
     @Query("SELECT COUNT(r) FROM DonationRequest r WHERE r.decidedAt >= :since")
     long countDecidedSince(@Param("since") LocalDateTime since);
 
-    /**
-     * Requests whose status last moved since the given moment, grouped by the status they are in
-     * now. COALESCE covers both cases in one query: a pending request has no decidedAt, so its
-     * arrival counts as the change.
-     */
-    @Query("SELECT r.status, COUNT(r) FROM DonationRequest r "
-            + "WHERE COALESCE(r.decidedAt, r.requestDate) >= :since GROUP BY r.status")
+    // Requests whose status last moved since a given moment, grouped by where they are now. Pending
+    // requests have no decidedAt, so their arrival counts as the change; everything else is judged
+    // on decidedAt alone.
+    //
+    // This was once COALESCE(r.decidedAt, r.requestDate), which read better but fired for any null
+    // decidedAt rather than only pending ones. Rows approved before the decided_at column existed
+    // have a null there, so they fell back to their raise date and were reported as moving into
+    // APPROVED on the day they were merely raised - permanently, since that date never changes.
+    // A row whose decision time is unknown belongs in no day's total.
+    @Query("SELECT r.status, COUNT(r) FROM DonationRequest r WHERE "
+            + "(r.status = com.project.BloodBank.model.enums.RequestStatus.PENDING "
+            + "  AND r.requestDate >= :since) "
+            + "OR (r.status <> com.project.BloodBank.model.enums.RequestStatus.PENDING "
+            + "  AND r.decidedAt >= :since) "
+            + "GROUP BY r.status")
     List<Object[]> countGroupedByStatusChangedSince(@Param("since") LocalDateTime since);
 }

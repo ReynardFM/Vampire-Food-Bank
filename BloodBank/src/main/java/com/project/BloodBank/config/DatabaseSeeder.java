@@ -24,42 +24,45 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Fills an empty database with a working blood bank: an administrator, a donor roster covering
- * every blood group, a request queue spanning every status, and roughly a year of donation history.
- *
- * Registration only ever creates ROLE_DONOR accounts and nothing else makes an administrator, so
- * without this a fresh database cannot reach /dashboard or /admin/**. Passwords are encoded here
- * rather than written as SQL because BCrypt hashes must be generated, not hand-written.
- *
- * Safe to leave enabled and safe to run against a database you have already been using. Donors are
- * matched on email, and the history is keyed off a seed-owned account, so restarting never
- * duplicates anything and your own accounts and requests are left alone.
- *
- * Turn it off with:
- *   bloodbank.seed.enabled=false
- */
+// Fills an empty database with a working blood bank: an administrator, donors covering every blood
+// group, a request queue spanning every status, and roughly a year of donation history.
+//
+// This is not a convenience. Registration only creates DONOR accounts and nothing else makes an
+// administrator, so without this a fresh database cannot reach /dashboard or /admin/** at all.
+// Passwords are encoded here rather than written as SQL because BCrypt hashes have to be generated.
+//
+// CommandLineRunner means Spring calls run() once, after the application has fully started - which
+// matters, because it needs the repositories and the password encoder to already exist.
+//
+// Safe to leave enabled, and safe against a database you have been using. Donors are matched on
+// email and the history is keyed off a seed-owned account, so restarting never duplicates anything
+// and never touches your own data. Turn it off with bloodbank.seed.enabled=false.
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseSeeder.class);
 
-    /**
-     * Whether the history has been seeded is decided by looking at this account. It only ever
-     * exists because the seeder created it, so anything attached to it came from a previous run.
-     */
+    // How the seeder knows whether it has run before. This account only ever exists because the
+    // seeder created it, so anything attached to it came from a previous run.
+    //
+    // Checking a marker rather than counting rows matters: one hand-made request would otherwise
+    // look like "already seeded" and block the whole set.
     private static final String MARKER_EMAIL = "jane.doe@example.com";
 
+    // Records describing the data to create, so the rosters below read as tables rather than as
+    // pages of setter calls. They are private and used nowhere else.
     private record DonorSeed(String email, String name, BloodGroup group, Gender gender,
                              LocalDate born, String phone, String address, boolean active) {
     }
 
+    // daysAgo rather than a fixed date, so seeded history is always relative to when it was
+    // created and the dashboard has recent activity whenever the project is set up.
     private record RequestSeed(String email, BloodGroup group, int units, String hospital,
                                String hospitalAddress, UrgencyLevel urgency, RequestStatus status,
                                int daysAgo, String notes) {
     }
 
-    /** linkedRequest indexes into the saved request list, or -1 for an unlinked walk-in donation. */
+    // linkedRequest indexes into the saved request list, or -1 for an unlinked walk-in donation.
     private record DonationSeed(String email, int daysAgo, int units, String location,
                                 int linkedRequest) {
     }
@@ -91,6 +94,10 @@ public class DatabaseSeeder implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // Runs once at startup. @Transactional wraps the lot, so a failure half way leaves an empty
+    // database rather than a half-built one that the guards below would then treat as complete.
+    //
+    // Order matters: requests and donations both reference users, so people have to exist first.
     @Override
     @Transactional
     public void run(String... args) {
@@ -109,6 +116,8 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     // ------------------------------------------------------------------ people
 
+    // Each seed method starts by checking whether its own work already exists, which is what makes
+    // the whole seeder safe to run repeatedly.
     private void seedAdmin() {
         if (userRepository.existsByEmail(adminEmail)) {
             return;
@@ -124,7 +133,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                 adminEmail);
     }
 
-    /** Every blood group appears at least once so donor search never comes back empty. */
+    // Every blood group appears at least once, so donor search never comes back empty whichever
+    // group is chosen - including O-, which only O- donors can serve.
     private List<DonorSeed> donorRoster() {
         return List.of(
                 new DonorSeed("jane.doe@example.com", "Jane Doe", BloodGroup.A_POSITIVE, Gender.FEMALE,
@@ -204,6 +214,8 @@ public class DatabaseSeeder implements CommandLineRunner {
             return;
         }
 
+        // Saved requests are collected as they are written, because the donations below link to
+        // them by position in this list and need the ids the database has just assigned.
         List<DonationRequest> saved = new ArrayList<>();
         for (RequestSeed seed : requestRoster()) {
             DonationRequest request = new DonationRequest();
@@ -240,15 +252,21 @@ public class DatabaseSeeder implements CommandLineRunner {
         backfillLastDonationDates();
     }
 
-    /** Indexes 3, 7 and 10 are the FULFILLED requests that donations below link back to. */
+    // A spread of statuses and urgencies, so every filter, badge colour and sort order has
+    // something to show. Indexes 3, 7 and 10 are the FULFILLED ones the donations link back to -
+    // which is why reordering this list would break donationRoster().
     private List<RequestSeed> requestRoster() {
         return List.of(
                 new RequestSeed("jane.doe@example.com", BloodGroup.A_POSITIVE, 2, "Toronto General Hospital",
                         "200 Elizabeth Street, Toronto, ON", UrgencyLevel.HIGH, RequestStatus.PENDING,
                         1, "Scheduled surgery on Friday."),
+                // Deliberately not daysAgo = 0. The seeder stamps a real timestamp once and it never
+                // moves again, so a request raised "today" is really raised on whatever day the
+                // database was first seeded - which leaves the dashboard's today counters showing
+                // activity nobody performed, and makes it impossible to tell seed data from your own.
                 new RequestSeed("priya.nair@example.com", BloodGroup.O_NEGATIVE, 4, "Mount Sinai Hospital",
                         "600 University Avenue, Toronto, ON", UrgencyLevel.CRITICAL, RequestStatus.PENDING,
-                        0, "Trauma case, needs universal donor units."),
+                        1, "Trauma case, needs universal donor units."),
                 new RequestSeed("noah.bergman@example.com", BloodGroup.B_NEGATIVE, 1, "Markham Stouffville Hospital",
                         "381 Church Street, Markham, ON", UrgencyLevel.MEDIUM, RequestStatus.PENDING,
                         3, null),
@@ -315,10 +333,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         );
     }
 
-    /**
-     * Derives each donor's lastDonationDate from the donations actually written, so the profile and
-     * search columns agree with the history instead of being independently made up.
-     */
+    // Derives each donor's lastDonationDate from the donations actually written, rather than making
+    // it up separately - otherwise the profile column and the history below it could disagree.
     private void backfillLastDonationDates() {
         for (User donor : userRepository.findAll()) {
             List<Donation> donations = donationRepository.findByDonorOrderByDonationDateDesc(donor);
@@ -329,6 +345,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
     }
 
+    // Every seeded row references a donor by email, so a typo would otherwise produce a confusing
+    // constraint violation later. Failing here says exactly which address is missing.
     private User required(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("Seed user missing: " + email));
