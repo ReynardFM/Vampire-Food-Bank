@@ -9,6 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
+<!--/*
+  Recording a donation - the last step of the fulfilment workflow, and admin-only.
+
+  This is the screen that ties the two halves of the application together. Saving here writes the
+  donation, updates the donor's last donation date, feeds the dashboard, and closes out the request
+  it is linked to.
+*/-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
@@ -60,6 +67,11 @@
                 </div>
                 <div class="form-field full">
                     <label for="linkedRequestId">Fulfils an approved request <small>(optional)</small></label>
+                    <!--/*
+                      The list is already filtered to requests this donor's blood can serve, so an
+                      incompatible one cannot be picked here. DonationService checks again anyway,
+                      because the chosen id is posted from the browser and could be anything.
+                    */-->
                     <select id="linkedRequestId" th:field="*{linkedRequestId}">
                         <option value="">Not linked to a request</option>
                         <option th:each="req : ${approvedRequests}" th:value="${req.id}"
@@ -67,8 +79,20 @@
                                          + ', ' + ${req.unitsNeeded} + ' unit(s) at ' + ${req.hospitalName}"></option>
                     </select>
                     <span class="field-error" th:if="${#fields.hasErrors('linkedRequestId')}" th:errors="*{linkedRequestId}"></span>
-                    <p class="field-hint" th:if="${#lists.isEmpty(approvedRequests)}">
-                        No approved requests are waiting. Approve one from the pending queue to link it here.
+                    <!--/*
+                      An empty list has two quite different causes, so there are two messages.
+                      Saying the wrong one would send the administrator off to the pending queue
+                      when the real problem is a donor with no blood group on file.
+                    */-->
+                    <p class="field-hint" th:if="${donor.bloodGroup == null}">
+                        This donor has no blood group on file, so there is no way to tell which
+                        requests they could fulfil. Their donation can still be recorded on its own.
+                    </p>
+                    <p class="field-hint"
+                       th:if="${donor.bloodGroup != null and #lists.isEmpty(approvedRequests)}">
+                        No approved request is waiting that
+                        <span th:text="${donor.bloodGroup.displayName}">A+</span> blood can serve.
+                        Approve a matching one from the pending queue to link it here.
                     </p>
                 </div>
             </div>

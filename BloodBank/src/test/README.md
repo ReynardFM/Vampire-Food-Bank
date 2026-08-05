@@ -1,6 +1,6 @@
 # Test Guide
 
-30 tests across 9 classes. This explains what each one checks and why it's worth having.
+36 tests across 9 classes. This explains what each one checks and why it's worth having.
 
 ## Running them
 
@@ -51,7 +51,7 @@ Starts the application and does nothing else. It sounds trivial, but it's the te
 likely to catch a broken configuration: a bad annotation, a missing bean, a malformed
 property. If this fails, nothing else will run either.
 
-### `BloodGroupTest` — 7 tests
+### `BloodGroupTest` — 10 tests
 
 Checks `BloodGroup.compatibleDonors()` against the real transfusion rules. This is the
 most valuable file here, because these rules are medical facts that are easy to get
@@ -63,6 +63,11 @@ subtly wrong and impossible to spot by reading:
 - **Rh-negative patients are never offered Rh-positive blood** — checked across all groups
 - **A and B never cross**, except for AB recipients who can take both
 - Every group can always receive its own
+
+`compatibleRecipients()` answers the same question from the donor's side, and gets three
+more tests. The important one walks all 64 pairs and asserts the two directions agree —
+donor search reads one, recording a donation reads the other, and a disagreement would
+mean offering a donor the next screen then refuses.
 
 ### `UrgencyLevelTest` — 2 tests
 
@@ -86,13 +91,20 @@ sorting.
 - Deactivated accounts disappear from the account listing
 - Registration stores a BCrypt hash, not the plain password, and assigns `DONOR`
 
-### `DonationServiceTest` — 3 tests
+### `DonationServiceTest` — 6 tests
 
 - Recording a donation updates the donor's `lastDonationDate`
+- **A backdated donation does not drag `lastDonationDate` backwards.** Donations are often
+  entered days after collection, so a later entry can carry an earlier date; the field has
+  to hold the most recent donation, not the most recently typed one
 - **Linking a donation to an APPROVED request marks that request FULFILLED** — the step
   that closes the request lifecycle
 - **Linking to a request that isn't APPROVED is refused**, and the request's status is
   left untouched
+- **Linking to a request this donor's blood cannot serve is refused.** An A+ donation must
+  not close out a request raised for an O− patient
+- A donor with no blood group on file cannot link to anything, since nothing is known
+  about who they can give to
 
 ### `DatabaseSeederTest` — 3 tests
 

@@ -65,4 +65,31 @@ class BloodGroupTest {
                     .contains(group);
         }
     }
+
+    /**
+     * The two directions must agree in every cell, or donor search and the recording step would
+     * disagree about the same pair - one offering a donor the other then refuses.
+     */
+    @Test
+    void theTwoDirectionsAgreeForEveryPair() {
+        for (BloodGroup donor : BloodGroup.values()) {
+            for (BloodGroup recipient : BloodGroup.values()) {
+                assertThat(donor.compatibleRecipients().contains(recipient))
+                        .as("%s -> %s", donor, recipient)
+                        .isEqualTo(recipient.compatibleDonors().contains(donor));
+            }
+        }
+    }
+
+    @Test
+    void oNegativeCanGiveToEveryGroup() {
+        assertThat(BloodGroup.O_NEGATIVE.compatibleRecipients())
+                .containsExactlyInAnyOrder(BloodGroup.values());
+    }
+
+    @Test
+    void abPositiveCanOnlyGiveToItself() {
+        assertThat(BloodGroup.AB_POSITIVE.compatibleRecipients())
+                .containsExactly(BloodGroup.AB_POSITIVE);
+    }
 }

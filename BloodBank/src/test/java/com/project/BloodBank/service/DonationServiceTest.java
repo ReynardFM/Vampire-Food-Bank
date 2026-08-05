@@ -55,9 +55,13 @@ class DonationServiceTest {
     }
 
     private DonationRequest request(RequestStatus status) {
+        return request(status, BloodGroup.A_POSITIVE);
+    }
+
+    private DonationRequest request(RequestStatus status, BloodGroup requestedGroup) {
         DonationRequest request = new DonationRequest();
         request.setRequestedBy(donor);
-        request.setRequestedBloodGroup(BloodGroup.A_POSITIVE);
+        request.setRequestedBloodGroup(requestedGroup);
         request.setUnitsNeeded(1);
         request.setHospitalName("Test Hospital");
         request.setUrgencyLevel(UrgencyLevel.HIGH);
@@ -112,5 +116,48 @@ class DonationServiceTest {
                 .get()
                 .extracting(DonationRequest::getStatus)
                 .isEqualTo(RequestStatus.PENDING);
+    }
+
+    /**
+     * Donations are often entered days after collection, so a later entry may carry an earlier
+     * date. lastDonationDate has to stay the most recent one.
+     */
+    @Test
+    void aBackdatedDonationDoesNotDragTheLastDonationDateBackwards() {
+        LocalDate recent = LocalDate.now().minusDays(2);
+        donationService.recordDonation(dto(recent, null), donor);
+
+        donationService.recordDonation(dto(LocalDate.now().minusMonths(6), null), donor);
+
+        assertThat(userRepository.findById(donor.getId()))
+                .get()
+                .extracting(User::getLastDonationDate)
+                .isEqualTo(recent);
+    }
+
+    /** An A+ donation must not be able to close out a request raised for an O- patient. */
+    @Test
+    void linkingToARequestThisDonorCannotServeIsRefused() {
+        DonationRequest incompatible = request(RequestStatus.APPROVED, BloodGroup.O_NEGATIVE);
+
+        assertThatThrownBy(() ->
+                donationService.recordDonation(dto(LocalDate.now(), incompatible.getId()), donor))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(requestRepository.findById(incompatible.getId()))
+                .get()
+                .extracting(DonationRequest::getStatus)
+                .isEqualTo(RequestStatus.APPROVED);
+    }
+
+    @Test
+    void aDonorWithNoBloodGroupCannotLinkToAnyRequest() {
+        donor.setBloodGroup(null);
+        donor = userRepository.save(donor);
+        DonationRequest approved = request(RequestStatus.APPROVED);
+
+        assertThatThrownBy(() ->
+                donationService.recordDonation(dto(LocalDate.now(), approved.getId()), donor))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
