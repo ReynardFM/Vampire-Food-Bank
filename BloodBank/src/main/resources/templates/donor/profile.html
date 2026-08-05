@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile - LifeLine Blood Bank</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <!--/*
@@ -14,65 +15,85 @@
   Also where a donor is nudged to finish registering. Registration only collects a name, email and
   password, so blood group is null until the profile is completed - and a donor with no blood group
   never appears in any search. The prompt below is the only place that is pointed out.
-
-  This page still styles itself with inline attributes rather than pages.css like the rest of the
-  admin screens. It works, but it is the odd one out.
 */-->
 <body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
-<div class="form_container" style="flex-direction: column; align-items: center; padding-top: 30px;">
-    <div th:if="${success}" class="alert alert-success" style="width: 80%;" th:text="${success}"></div>
-    <div th:if="${error}" class="alert alert-danger" style="width: 80%;" th:text="${error}"></div>
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Donor profile</div>
+            <h1>My Profile</h1>
+            <p>Your details and every donation recorded against your account.</p>
+        </div>
+        <a class="btn-secondary" th:href="@{/donor/profile-edit}">
+            <i class="fa-solid fa-pen-to-square"></i> Edit profile
+        </a>
+    </div>
 
-    <div style="display: flex; gap: 30px; width: 80%; flex-wrap: wrap;">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
+    <!--/* Two cards side by side, the same arrangement the dashboard uses for its charts. */-->
+    <div class="split-layout">
+        <section class="surface-card">
+            <h2 class="section-title">Details</h2>
 
-        <div class="login_panel" style="flex: 1; min-width: 300px; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="font-size: 24px;"><i class="fa-solid fa-user" style="color: #d62929; margin-right: 10px;"></i>My Profile</h2>
-                <a th:href="@{/donor/profile-edit}" style="color: #d62929; text-decoration: none; font-weight: 600;">
-                    <i class="fa-solid fa-pen-to-square"></i> Edit
-                </a>
-            </div>
+            <dl class="detail-grid">
+                <div class="detail-item wide">
+                    <dt>Name</dt>
+                    <dd th:text="${user.fullName}">Jane Doe</dd>
+                </div>
+                <div class="detail-item wide">
+                    <dt>Email</dt>
+                    <dd th:text="${user.email}">jane@example.com</dd>
+                </div>
+                <div class="detail-item">
+                    <dt>Blood group</dt>
+                    <dd>
+                        <span class="badge badge-blood" th:if="${user.bloodGroup != null}"
+                              th:text="${user.bloodGroup.displayName}">A+</span>
+                        <span th:if="${user.bloodGroup == null}">Not set</span>
+                    </dd>
+                </div>
+                <div class="detail-item">
+                    <dt>Phone</dt>
+                    <dd th:text="${user.phoneNumber != null ? user.phoneNumber : 'Not set'}">+1 416 555 0123</dd>
+                </div>
+                <!--/*
+                  Blood group standing in for "is this profile complete". It is the field that
+                  actually matters: without it the donor is invisible to search and cannot have a
+                  donation linked to a request.
 
-            <p style="margin-bottom: 10px;"><strong>Name:</strong> <span th:text="${user.fullName}"></span></p>
-            <p style="margin-bottom: 10px;"><strong>Email:</strong> <span th:text="${user.email}"></span></p>
-            <p style="margin-bottom: 10px;"><strong>Blood Group:</strong>
-                <span th:text="${user.bloodGroup != null ? user.bloodGroup.displayName : 'Not specified'}"></span>
-            </p>
-            <p style="margin-bottom: 10px;"><strong>Phone:</strong>
-                <span th:text="${user.phoneNumber != null ? user.phoneNumber : 'Not specified'}"></span>
-            </p>
-
-            <!--/*
-              Blood group standing in for "is this profile complete". It is the field that actually
-              matters: without it the donor is invisible to search and cannot have a donation linked
-              to a request, so it is the one worth checking.
-            */-->
-            <p style="margin-bottom: 10px;"><strong>Status:</strong>
-                <span th:if="${user.bloodGroup == null}" style="color: #d62929; font-weight: bold;">Profile Incomplete</span>
-                <span th:if="${user.bloodGroup != null}" style="color: #155724; font-weight: bold;">Active Donor</span>
-            </p>
+                  The badge colours here are borrowed as plain red and green rather than for their
+                  request-status meaning.
+                */-->
+                <div class="detail-item wide">
+                    <dt>Status</dt>
+                    <dd>
+                        <span class="badge badge-rejected" th:if="${user.bloodGroup == null}">PROFILE INCOMPLETE</span>
+                        <span class="badge badge-approved" th:if="${user.bloodGroup != null}">ACTIVE DONOR</span>
+                    </dd>
+                </div>
+            </dl>
 
             <!--/* The way into the second half of registration, shown only while it is unfinished. */-->
-            <div th:if="${user.bloodGroup == null}" style="margin-top: 25px;">
-                <a th:href="@{/donor/complete-profile}" style="display: inline-block; padding: 12px 20px; background: #d62929; color: white; border-radius: 45px; text-decoration: none; font-weight: 600; width: 100%; text-align: center;">
-                    Complete Profile Now
+            <div class="inline-actions" style="margin-top: 24px;" th:if="${user.bloodGroup == null}">
+                <a class="btn-primary" th:href="@{/donor/complete-profile}">
+                    <i class="fa-solid fa-user-check"></i> Complete profile now
                 </a>
             </div>
-        </div>
+        </section>
 
+        <section class="surface-card table-wrap">
+            <h2 class="section-title">Donation history</h2>
 
-        <div class="login_panel" style="flex: 2; min-width: 400px; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 30px;">
-            <h2 style="margin-bottom: 20px; font-size: 24px;"><i class="fa-solid fa-clock-rotate-left" style="color: #d62929; margin-right: 10px;"></i>Donation History</h2>
-
-            <table class="simple-table" style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Outfit', sans-serif;">
+            <table class="data-table">
                 <thead>
-                <tr style="border-bottom: 2px solid #ddd;">
+                <tr>
                     <th th:replace="~{fragments/sort :: sortable('Date', 'donationDate', ${sort}, ${dir}, '/donor/profile')}"></th>
                     <th th:replace="~{fragments/sort :: sortable('Location', 'location', ${sort}, ${dir}, '/donor/profile')}"></th>
-                    <th th:replace="~{fragments/sort :: sortable('Units Donated', 'unitsDonated', ${sort}, ${dir}, '/donor/profile')}"></th>
+                    <th th:replace="~{fragments/sort :: sortable('Units', 'unitsDonated', ${sort}, ${dir}, '/donor/profile')}"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -82,25 +103,24 @@
                   over an empty list simply renders nothing, leaving a headed table with no body.
                 */-->
                 <tr th:if="${#lists.isEmpty(donations)}">
-                    <td colspan="3" style="padding: 20px 8px; color: #888; text-align: center; font-style: italic;">
-                        No donation history found.
+                    <td class="empty-state" colspan="3">
+                        <i class="fa-regular fa-folder-open"></i> No donations recorded yet.
                     </td>
                 </tr>
-                <tr th:each="donation : ${donations}" style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 15px 8px;" th:text="${donation.donationDate}"></td>
-                    <td style="padding: 15px 8px;" th:text="${donation.location}"></td>
-                    <td style="padding: 15px 8px;">
-                                <span style="background: #f8d7da; color: #d62929; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 13px;"
-                                      th:text="${donation.unitsDonated} + ' Units'"></span>
+                <tr th:each="donation : ${donations}">
+                    <td th:text="${#temporals.format(donation.donationDate, 'MMM d, yyyy')}">Jul 28, 2026</td>
+                    <td th:text="${donation.location}">Toronto General Hospital</td>
+                    <td>
+                        <span class="badge badge-blood" th:text="${donation.unitsDonated} + ' units'">1 units</span>
                     </td>
                 </tr>
                 </tbody>
             </table>
 
             <nav th:replace="~{fragments/pagination :: pager(${page}, ${sort}, ${dir}, '/donor/profile')}"></nav>
-        </div>
+        </section>
     </div>
-</div>
+</main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>

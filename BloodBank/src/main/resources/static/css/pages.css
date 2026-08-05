@@ -333,6 +333,41 @@ body > .footer {
     margin: 0;
 }
 
+/* ========== DETAIL LISTS ========== */
+/* Label-and-value pairs for read-only pages, as opposed to .form-grid which is for inputs.
+   Each pair is wrapped in a .detail-item so the two stay together as one grid cell - HTML5
+   allows a div grouping a dt/dd pair inside a dl. */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+    margin: 0;
+}
+
+.detail-item.wide {
+    grid-column: 1 / -1;
+}
+
+.detail-item dt {
+    margin-bottom: 6px;
+    color: #777;
+    font-size: 14px;
+}
+
+.detail-item dd {
+    margin: 0;
+    color: #222;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.detail-item dd.accent {
+    color: #d62929;
+    font-size: 20px;
+    font-weight: 700;
+}
+
 /* ========== FORMS ========== */
 .form-grid {
     display: grid;

@@ -4,79 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Requests - LifeLine Blood Bank</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
-<body>
 <!--/*
   A donor's own requests, and how they were decided.
 
   Scoped to whoever is signed in - the controller queries by the current user, so this never shows
   anyone else's. The equivalent admin view of every request is admin/request-list.
 */-->
+<body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
-<div class="form_container" style="flex-direction: column; align-items: center; padding-top: 30px;">
-    <div th:if="${success}" class="alert alert-success" style="width: 80%;" th:text="${success}"></div>
-    <div th:if="${error}" class="alert alert-danger" style="width: 80%;" th:text="${error}"></div>
-
-    <div class="login_panel" style="width: 80%; border-radius: 25px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="font-size: 24px;"><i class="fa-solid fa-list-ul" style="color: #d62929; margin-right: 10px;"></i>My Blood Requests</h2>
-            <a th:href="@{/requests/create}" style="padding: 10px 20px; background: #d62929; color: white; border-radius: 45px; text-decoration: none; font-weight: 600;">
-                <i class="fa-solid fa-plus"></i> New Request
-            </a>
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">My activity</div>
+            <h1>My Blood Requests</h1>
+            <p>Every request you have raised, and how it was decided.</p>
         </div>
+        <a class="btn-primary" th:href="@{/requests/create}">
+            <i class="fa-solid fa-plus"></i> New request
+        </a>
+    </div>
 
-        <table class="simple-table" style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Outfit', sans-serif;">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <section class="surface-card table-wrap">
+        <table class="data-table">
             <thead>
-            <tr style="border-bottom: 2px solid #ddd;">
+            <tr>
                 <th th:replace="~{fragments/sort :: sortable('Date', 'requestDate', ${sort}, ${dir}, '/requests/list')}"></th>
-                <th th:replace="~{fragments/sort :: sortable('Blood Group', 'requestedBloodGroup', ${sort}, ${dir}, '/requests/list')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Blood', 'requestedBloodGroup', ${sort}, ${dir}, '/requests/list')}"></th>
                 <th th:replace="~{fragments/sort :: sortable('Units', 'unitsNeeded', ${sort}, ${dir}, '/requests/list')}"></th>
                 <th th:replace="~{fragments/sort :: sortable('Hospital', 'hospitalName', ${sort}, ${dir}, '/requests/list')}"></th>
                 <th th:replace="~{fragments/sort :: sortable('Urgency', 'urgencyLevel', ${sort}, ${dir}, '/requests/list')}"></th>
                 <th th:replace="~{fragments/sort :: sortable('Status', 'status', ${sort}, ${dir}, '/requests/list')}"></th>
-                <th style="padding: 12px 8px; color: #555;">Action</th>
+                <!--/* Not sortable - there is nothing to order a column of buttons by. */-->
+                <th>Actions</th>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${#lists.isEmpty(requests)}">
-                <td colspan="7" style="padding: 20px 8px; color: #888; text-align: center; font-style: italic;">
-                    You haven't made any requests yet.
+                <td class="empty-state" colspan="7">
+                    <i class="fa-regular fa-folder-open"></i> You haven't raised any requests yet.
                 </td>
             </tr>
-            <tr th:each="req : ${requests}" style="border-bottom: 1px solid #eee;">
+            <tr th:each="req : ${requests}">
                 <!--/*
                   #temporals is Thymeleaf's date helper. Without it a LocalDateTime prints in its
                   raw form, including the time to the nanosecond.
                 */-->
-                <td style="padding: 15px 8px;" th:text="${#temporals.format(req.requestDate, 'yyyy-MM-dd')}"></td>
-                <td style="padding: 15px 8px; font-weight: bold; color: #d62929;" th:text="${req.requestedBloodGroup.displayName}"></td>
-                <td style="padding: 15px 8px;" th:text="${req.unitsNeeded}"></td>
-                <td style="padding: 15px 8px;" th:text="${req.hospitalName}"></td>
-                <td style="padding: 15px 8px;" th:text="${req.urgencyLevel}"></td>
-                <td style="padding: 15px 8px;">
+                <td th:text="${#temporals.format(req.requestDate, 'MMM d, yyyy')}">Jul 28, 2026</td>
+                <td><span class="badge badge-blood" th:text="${req.requestedBloodGroup.displayName}">A+</span></td>
+                <td th:text="${req.unitsNeeded}">1</td>
+                <td th:text="${req.hospitalName}">Hospital</td>
+                <td th:text="${req.urgencyLevel}">HIGH</td>
+                <td>
                     <!--/*
-                      Four th:if blocks because the colours are inline here. admin/request-list does
-                      the same job in one line by deriving a CSS class from the status name.
+                      One badge deriving its colour from the status name, the same way
+                      admin/request-list does it. A new status would style itself.
                     */-->
-                    <span th:if="${req.status.name() == 'PENDING'}" style="background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">PENDING</span>
-                    <span th:if="${req.status.name() == 'APPROVED'}" style="background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">APPROVED</span>
-                    <span th:if="${req.status.name() == 'REJECTED'}" style="background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">REJECTED</span>
-                    <span th:if="${req.status.name() == 'FULFILLED'}" style="background: #cce5ff; color: #004085; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">FULFILLED</span>
+                    <span class="badge"
+                          th:classappend="${'badge-' + #strings.toLowerCase(req.status.name())}"
+                          th:text="${req.status}">PENDING</span>
                 </td>
-                <td style="padding: 15px 8px;">
-                    <a th:href="@{/requests/{id}(id=${req.id})}" style="color: #222; text-decoration: underline; font-size: 14px;">View</a>
+                <td>
+                    <!--/*
+                      No "from" parameter, unlike the admin listings. This is the donor's own list,
+                      so the detail page's default of "Back to my requests" is already correct.
+                    */-->
+                    <a class="btn-secondary" th:href="@{/requests/{id}(id=${req.id})}">View</a>
                 </td>
             </tr>
             </tbody>
         </table>
+    </section>
 
-        <nav th:replace="~{fragments/pagination :: pager(${page}, ${sort}, ${dir}, '/requests/list')}"></nav>
-    </div>
-</div>
+    <nav th:replace="~{fragments/pagination :: pager(${page}, ${sort}, ${dir}, '/requests/list')}"></nav>
+</main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>

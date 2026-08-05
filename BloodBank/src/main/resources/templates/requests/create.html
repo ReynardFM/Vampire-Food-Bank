@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Request Blood - LifeLine Blood Bank</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
-<body>
 <!--/*
   Raising a blood request. Any signed-in account can, donor or administrator.
 
@@ -16,70 +16,88 @@
   requester from the session and the entity defaults the status to PENDING, so neither can be
   chosen by editing the posted data.
 */-->
+<body>
 <div th:replace="~{fragments/header :: header(user=${user})}"></div>
 
-<div class="form_container" style="justify-content: center;">
-    <div class="login_panel" style="width: 60%; border-radius: 25px; box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);">
-        <h2 style="margin-bottom: 20px;"><i class="fa-solid fa-truck-medical" style="color: #d62929; margin-right: 10px;"></i>Request Blood</h2>
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">Blood request</div>
+            <h1>Request Blood</h1>
+            <p>
+                Tell us what the patient needs and where. An administrator reviews every request
+                before donors are contacted.
+            </p>
+        </div>
+        <a class="btn-secondary" th:href="@{/requests/list}">
+            <i class="fa-solid fa-arrow-left"></i> My requests
+        </a>
+    </div>
 
-        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
 
+    <section class="surface-card">
         <form th:action="@{/requests/create}" th:object="${requestDto}" method="post">
-
-            <div style="display: flex; gap: 20px;">
-                <div style="flex: 1;">
-                    <label for="requestedBloodGroup">Blood Group Needed</label>
+            <!--/*
+              form-grid lays the fields out in columns that collapse on a narrow screen. "full" on a
+              form-field makes it span the whole width, which is what the address and notes need.
+            */-->
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="requestedBloodGroup">Blood group needed</label>
                     <select id="requestedBloodGroup" th:field="*{requestedBloodGroup}" required>
-                        <option value="" disabled selected>Select Blood Group</option>
+                        <option value="">Select blood group</option>
                         <!--/*
                           Built from the enum rather than typed out, so the list can never fall out
                           of step with the values the application actually accepts.
                         */-->
                         <option th:each="bg : ${bloodGroups}" th:value="${bg}" th:text="${bg.displayName}"></option>
                     </select>
-                    <span th:if="${#fields.hasErrors('requestedBloodGroup')}" th:errors="*{requestedBloodGroup}" style="color: #d62929; font-size: 13px;"></span>
+                    <span class="field-error" th:if="${#fields.hasErrors('requestedBloodGroup')}" th:errors="*{requestedBloodGroup}"></span>
                 </div>
 
-                <div style="flex: 1;">
-                    <label for="unitsNeeded">Units Needed</label>
-                    <input type="number" id="unitsNeeded" th:field="*{unitsNeeded}" min="1" required>
-                    <span th:if="${#fields.hasErrors('unitsNeeded')}" th:errors="*{unitsNeeded}" style="color: #d62929; font-size: 13px;"></span>
+                <div class="form-field">
+                    <label for="unitsNeeded">Units needed</label>
+                    <input id="unitsNeeded" type="number" th:field="*{unitsNeeded}" min="1" required>
+                    <span class="field-error" th:if="${#fields.hasErrors('unitsNeeded')}" th:errors="*{unitsNeeded}"></span>
                 </div>
-            </div>
 
-            <div style="display: flex; gap: 20px;">
-                <div style="flex: 1;">
-                    <label for="urgencyLevel">Urgency Level</label>
+                <div class="form-field">
+                    <label for="urgencyLevel">Urgency level</label>
                     <select id="urgencyLevel" th:field="*{urgencyLevel}" required>
-                        <option value="" disabled selected>Select Urgency</option>
+                        <option value="">Select urgency</option>
                         <option th:each="urgency : ${urgencyLevels}" th:value="${urgency}" th:text="${urgency}"></option>
                     </select>
-                    <span th:if="${#fields.hasErrors('urgencyLevel')}" th:errors="*{urgencyLevel}" style="color: #d62929; font-size: 13px;"></span>
+                    <span class="field-error" th:if="${#fields.hasErrors('urgencyLevel')}" th:errors="*{urgencyLevel}"></span>
                 </div>
 
-                <div style="flex: 1;">
-                    <label for="hospitalName">Hospital Name</label>
-                    <input type="text" id="hospitalName" th:field="*{hospitalName}" placeholder="e.g. Toronto General" required>
-                    <span th:if="${#fields.hasErrors('hospitalName')}" th:errors="*{hospitalName}" style="color: #d62929; font-size: 13px;"></span>
+                <div class="form-field">
+                    <label for="hospitalName">Hospital name</label>
+                    <input id="hospitalName" type="text" th:field="*{hospitalName}" placeholder="e.g. Toronto General" required>
+                    <span class="field-error" th:if="${#fields.hasErrors('hospitalName')}" th:errors="*{hospitalName}"></span>
+                </div>
+
+                <div class="form-field full">
+                    <label for="hospitalAddress">Hospital address</label>
+                    <input id="hospitalAddress" type="text" th:field="*{hospitalAddress}" placeholder="Street, city, province, postal code" required>
+                    <span class="field-error" th:if="${#fields.hasErrors('hospitalAddress')}" th:errors="*{hospitalAddress}"></span>
+                </div>
+
+                <div class="form-field full">
+                    <label for="notes">Additional notes <small>(optional)</small></label>
+                    <textarea id="notes" rows="3" th:field="*{notes}" placeholder="Any specific instructions for donors..."></textarea>
+                    <span class="field-error" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></span>
                 </div>
             </div>
 
-            <label for="hospitalAddress">Hospital Address</label>
-            <input type="text" id="hospitalAddress" th:field="*{hospitalAddress}" placeholder="Full address of the hospital" required>
-            <span th:if="${#fields.hasErrors('hospitalAddress')}" th:errors="*{hospitalAddress}" style="color: #d62929; font-size: 13px;"></span>
-
-            <label for="notes">Additional Notes (Optional)</label>
-            <textarea id="notes" th:field="*{notes}" placeholder="Any specific instructions for donors..." rows="3" style="width: 100%; margin-bottom: 22px; padding: 15px 18px; border: 1px solid #ddd; border-radius: 12px; font-family: 'Outfit', sans-serif; resize: vertical;"></textarea>
-
-            <button type="submit" style="width: 100%;"><i class="fa-solid fa-paper-plane"></i> Submit Request</button>
+            <div class="inline-actions" style="margin-top: 24px;">
+                <button class="btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Submit request</button>
+                <a class="btn-secondary" th:href="@{/requests/list}">Cancel</a>
+            </div>
         </form>
-
-        <p class="register">
-            <a th:href="@{/requests/list}"><i class="fa-solid fa-arrow-left"></i> Back to my requests</a>
-        </p>
-    </div>
-</div>
+    </section>
+</main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
