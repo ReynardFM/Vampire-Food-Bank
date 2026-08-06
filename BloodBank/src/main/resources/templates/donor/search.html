@@ -104,15 +104,25 @@
         </form>
     </section>
 
-    <section class="surface-card table-wrap" th:if="${selectedBloodGroup != null}">
-        <h2 class="section-title">
+    <!--/*
+      Always rendered now. With no group chosen the controller supplies the whole roster, so this
+      is the difference between a search screen that shows what exists and one that starts blank.
+    */-->
+    <section class="surface-card table-wrap">
+        <h2 class="section-title" th:if="${selectedBloodGroup != null}">
             Donors who can give to <span th:text="${selectedBloodGroup.displayName}">A+</span>
         </h2>
-        <p class="field-hint" style="margin-bottom: 14px;">
+        <h2 class="section-title" th:if="${selectedBloodGroup == null}">All registered donors</h2>
+
+        <!--/* Only meaningful once a group has been chosen - there is nothing to be compatible with otherwise. */-->
+        <p class="field-hint" style="margin-bottom: 14px;" th:if="${selectedBloodGroup != null}">
             Compatible groups:
             <span th:each="group, it : ${selectedBloodGroup.compatibleDonors()}">
                 <strong th:text="${group.displayName}">O-</strong><span th:unless="${it.last}">, </span>
             </span>
+        </p>
+        <p class="field-hint" style="margin-bottom: 14px;" th:if="${selectedBloodGroup == null}">
+            Choose the blood group the patient needs to narrow this to donors whose blood is safe for them.
         </p>
 
         <p class="field-hint" th:unless="${user != null and user.role.name() == 'ADMIN'}">
@@ -157,12 +167,22 @@
             <tr th:if="${#lists.isEmpty(results)}">
                 <!--/* colspan has to follow the same role check, or the empty row spans wrongly. */-->
                 <td class="empty-state" th:attr="colspan=${isAdmin ? 6 : 3}">
-                    No active donors can currently give to this blood group.
+                    <span th:if="${selectedBloodGroup != null}">No active donors can currently give to this blood group.</span>
+                    <span th:if="${selectedBloodGroup == null}">No donors are registered yet.</span>
                 </td>
             </tr>
             <tr th:each="donor : ${results}">
                 <td th:text="${donor.fullName}">Donor name</td>
-                <td><span class="badge badge-blood" th:text="${donor.bloodGroup.displayName}">A+</span></td>
+                <!--/*
+                  The null branch only fires on the unfiltered list. A compatibility search can
+                  never return a donor without a blood group, but the whole roster can - and
+                  reading displayName off null would take the page down.
+                */-->
+                <td>
+                    <span class="badge badge-blood" th:if="${donor.bloodGroup != null}"
+                          th:text="${donor.bloodGroup.displayName}">A+</span>
+                    <span class="field-hint" th:if="${donor.bloodGroup == null}">Not set</span>
+                </td>
                 <td th:if="${isAdmin}" th:text="${donor.phoneNumber != null ? donor.phoneNumber : 'Not provided'}">Phone</td>
                 <td th:text="${donor.lastDonationDate != null ? donor.lastDonationDate : 'No donations recorded'}">None</td>
                 <td th:if="${isAdmin}" th:text="${donor.address != null ? donor.address : 'Not provided'}">Address</td>

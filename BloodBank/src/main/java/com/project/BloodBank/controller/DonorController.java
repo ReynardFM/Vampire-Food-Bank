@@ -213,16 +213,23 @@ public class DonorController {
                 : SEARCH_SORT_FIELDS_MEMBER;
         SortRequest sorting = SortRequest.of(allowed, sort, dir, "fullName", Sort.Direction.ASC);
 
-        // Nothing is searched until a group is chosen, so arriving with no query string shows the
-        // form and no results rather than the entire donor roster.
+        // With no group chosen the page shows the whole roster rather than an empty table. Arriving
+        // at a search screen that has nothing on it gives no sense of what is even here, and the
+        // first thing anybody does is pick a group at random to find out.
+        //
+        // selectedBloodGroup is left unset in that case, which is what the view keys off to decide
+        // between "everyone" and "everyone who can give to X".
+        Page<User> results;
         if (bloodGroup != null) {
             // Compatible donors, not exact matches - see BloodGroup.compatibleDonors().
-            Page<User> results = userService.searchCompatibleDonors(bloodGroup,
-                    pageSupport.of(page, sorting.toSort()));
-            model.addAttribute("results", results.getContent());
-            model.addAttribute("page", results);
+            results = userService.searchCompatibleDonors(bloodGroup, pageSupport.of(page, sorting.toSort()));
             model.addAttribute("selectedBloodGroup", bloodGroup);
+        } else {
+            results = userService.getAllActiveUsers(pageSupport.of(page, sorting.toSort()));
         }
+
+        model.addAttribute("results", results.getContent());
+        model.addAttribute("page", results);
 
         sorting.applyTo(model);
         return "donor/search";
