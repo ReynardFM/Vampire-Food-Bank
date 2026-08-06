@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Out - LifeLine Blood Bank</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/pages.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+</head>
+<!--/*
+  Asks before signing out. The header link is a GET to /logout, which reaches AuthController and
+  renders this; the form below is the POST that Spring Security actually acts on.
+
+  Splitting it that way is what makes the confirmation possible without any JavaScript, and it keeps
+  the real sign-out a POST carrying a CSRF token - a GET that logged you out could be triggered by
+  any link or image on another site.
+*/-->
+<body>
+<div th:replace="~{fragments/header :: header(user=${user})}"></div>
+
+<main class="page-shell">
+    <section class="surface-card error-card">
+        <i class="fa-solid fa-right-from-bracket"
+           style="font-size: 34px; color: #d62929; margin-bottom: 18px;"></i>
+
+        <h1>Sign out of LifeLine?</h1>
+
+        <!--/* Naming the account makes this useful on a shared machine, not just a speed bump. */-->
+        <p th:if="${user != null}">
+            You are signed in as <strong th:text="${user.fullName}">Jane Doe</strong>.
+            You will need your password to sign back in.
+        </p>
+        <p th:if="${user == null}">You are not currently signed in.</p>
+
+        <div class="inline-actions" style="justify-content: center; margin-top: 26px;">
+            <!--/*
+              The real sign-out. Thymeleaf adds the CSRF token to any th:action form, and without
+              it Spring Security rejects the request.
+            */-->
+            <form th:action="@{/logout}" method="post">
+                <button class="btn-primary" type="submit">
+                    <i class="fa-solid fa-right-from-bracket"></i> Yes, sign out
+                </button>
+            </form>
+
+            <!--/* Cancel goes to the profile, which every signed-in account can reach. */-->
+            <a class="btn-secondary" th:href="@{/donor/profile}">Stay signed in</a>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -11,14 +11,20 @@
 */-->
 <div class="nav_bar" th:fragment="header(user)">
     <div class="left_nav">
-        <!--/* The logo doubles as the link home, which people expect of a site logo. */-->
+        <!--/*
+          Both the logo and the name link home, which is what people expect of a site header - the
+          name is the larger target of the two, and clicking it doing nothing reads as broken.
+
+          Two separate anchors rather than one wrapping both, because .left_nav lays its children
+          out as flex items and a single wrapper would collapse the two into one.
+        */-->
         <a class="logo-link" th:href="@{/home}" title="LifeLine Blood Bank home">
             <img th:src="@{/images/logo_white.png}" alt="LifeLine Blood Bank logo">
         </a>
-        <div class="brand">
+        <a class="brand" th:href="@{/home}" title="LifeLine Blood Bank home">
             <h2>LifeLine Blood Bank</h2>
             <span>www.lifeline.com</span>
-        </div>
+        </a>
     </div>
     <div class="right_nav">
         <!--/*
@@ -56,15 +62,15 @@
                 <i class="fa-solid fa-chart-pie"></i>Dashboard
             </a>
             <!--/*
-              A form rather than a link, because signing out changes something and a GET should
-              not. It also lets Thymeleaf attach the CSRF token automatically, without which
-              Spring Security would reject the request.
+              A link now, not a form, because this no longer signs anybody out - it opens the
+              confirmation page, and the POST that actually ends the session lives there.
+
+              That page is only reachable because Spring Security's logout matches POST /logout
+              alone while CSRF is enabled, so this GET falls through to AuthController.
             */-->
-            <form class="nav-logout-form" th:action="@{/logout}" method="post">
-                <button class="nav-logout" type="submit">
-                    <i class="fa-solid fa-right-from-bracket"></i>Logout
-                </button>
-            </form>
+            <a th:href="@{/logout}">
+                <i class="fa-solid fa-right-from-bracket"></i>Logout
+            </a>
         </th:block>
 
         <!--/* Outside both blocks, so it shows either way. */-->

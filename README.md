@@ -87,6 +87,7 @@ marks the request fulfilled.
 | --- | --- | --- |
 | `/`, `/home`, `/about-us` | Public | Landing and information pages |
 | `/login`, `/register` | Public | Authentication |
+| `/logout` | Authenticated | Confirm before signing out (GET); the POST ends the session |
 | `/donor/profile` | Authenticated | Profile and donation history |
 | `/donor/profile-edit` | Authenticated | Edit profile |
 | `/donor/search` | Authenticated | Find donors who can give to a blood group |

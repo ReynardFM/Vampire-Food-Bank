@@ -53,6 +53,10 @@ body,
 
 .brand {
     flex-direction: column;
+    /* It is an anchor now, so the browser's default link colour and underline have to be undone.
+       inherit picks up the white set on .left_nav. */
+    color: inherit;
+    text-decoration: none;
 }
 
 /* 27px rather than 30px: the admin nav carries two extra links, and at that size the

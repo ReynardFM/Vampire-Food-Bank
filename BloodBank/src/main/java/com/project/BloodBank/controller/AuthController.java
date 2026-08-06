@@ -48,6 +48,19 @@ public class AuthController {
         return "login";
     }
 
+    // Asks before signing out, rather than doing it the moment the header link is clicked.
+    //
+    // This works because Spring Security's logout only matches POST /logout while CSRF is enabled,
+    // so a GET falls through to here. The page it renders holds the actual POST form, which is the
+    // request Spring Security acts on - this method never signs anybody out itself.
+    //
+    // A page rather than a JavaScript confirm(): nothing else in this application needs JavaScript,
+    // and a dialog that silently does nothing when scripting is off is worse than no dialog.
+    @GetMapping("/logout")
+    public String confirmLogout() {
+        return "logout-confirm";
+    }
+
     // The containsAttribute check matters: a rejected submission redirects back here with the
     // filled-in form already in the model, and overwriting it with a blank one would wipe out
     // everything the user typed.
