@@ -68,7 +68,9 @@
                 </td>
                 <td>
                     <!--/* The date goes straight into the path, so the URL reads /admin/reports/2026-08-04. */-->
-                    <a class="btn-secondary" th:href="@{/admin/reports/{date}(date=${report.date})}">View report</a>
+                    <div class="inline-actions">
+                        <a class="btn-secondary" th:href="@{/admin/reports/{date}(date=${report.date})}">View report</a>
+                    </div>
                 </td>
             </tr>
             </tbody>

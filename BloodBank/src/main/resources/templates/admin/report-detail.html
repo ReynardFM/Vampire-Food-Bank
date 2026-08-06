@@ -196,10 +196,12 @@
                     <td th:text="${donation.location != null ? donation.location : 'Not recorded'}">Mount Sinai Hospital</td>
                     <!--/* Null for a walk-in donation that was not collected against any request. */-->
                     <td>
-                        <a th:if="${donation.linkedRequest != null}" class="btn-secondary"
-                           th:href="@{/requests/{id}(id=${donation.linkedRequest.id}, from='all')}"
-                           th:text="'Request #' + ${donation.linkedRequest.id}">Request #7</a>
-                        <span th:if="${donation.linkedRequest == null}">Walk-in</span>
+                        <div class="inline-actions">
+                            <a th:if="${donation.linkedRequest != null}" class="btn-secondary"
+                               th:href="@{/requests/{id}(id=${donation.linkedRequest.id}, from='all')}"
+                               th:text="'Request #' + ${donation.linkedRequest.id}">Request #7</a>
+                            <span class="field-hint" th:if="${donation.linkedRequest == null}">Walk-in</span>
+                        </div>
                     </td>
                 </tr>
                 </tbody>

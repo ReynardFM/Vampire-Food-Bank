@@ -27,12 +27,18 @@ body > .footer {
 }
 
 /* ========== PAGE SHELL ========== */
+/* margin: 0 auto is what centres this, and it keeps centring at any width - so the cap is free to
+   grow. It was 1180px, which left roughly 1060px of content once the 5% padding is taken off, and
+   the busier tables need more than that: the pending queue carries seven columns and three action
+   buttons. They were scrolling inside their card rather than being given the room.
+   Raised rather than letting table cards break out on their own, because a wider table beside a
+   narrower details card above it reads as a mistake. */
 .page-shell {
     width: 100%;
-    max-width: 1180px;
+    max-width: 1400px;
     flex: 1 1 auto;
     margin: 0 auto;
-    padding: 40px 5% 70px;
+    padding: 40px 4% 70px;
 }
 
 .page-heading {
@@ -170,7 +176,7 @@ body > .footer {
 }
 
 .data-table th {
-    padding: 16px 18px;
+    padding: 15px 14px;
     border-bottom: 2px solid #eee;
     color: #888;
     text-align: left;
@@ -182,7 +188,7 @@ body > .footer {
 }
 
 .data-table td {
-    padding: 16px 18px;
+    padding: 15px 14px;
     border-bottom: 1px solid #f0f0f0;
     color: #333;
     vertical-align: middle;
@@ -333,6 +339,39 @@ body > .footer {
     margin: 0;
 }
 
+/* ---- action buttons inside a table ---- */
+/* Page-level buttons are sized for a page. Dropped into a table cell at full size they dominate
+   the row, and .inline-actions wrapping meant a narrow Actions column stacked them vertically -
+   so row heights differed from row to row and table to table depending on how many actions each
+   row happened to have.
+
+   Two changes fix that. Never wrap: the table already has a min-width and its wrapper scrolls, so
+   the honest response to a narrow viewport is a wider table, not a taller row. And a shared
+   min-width, so View, Approve and Reject come out the same size and the column reads as a column
+   rather than a ragged edge. */
+.data-table .inline-actions {
+    flex-wrap: nowrap;
+}
+
+.data-table .btn-primary,
+.data-table .btn-secondary,
+.data-table .btn-success,
+.data-table .btn-danger {
+    min-width: 104px;
+    padding: 9px 16px;
+    font-size: 13px;
+    gap: 7px;
+}
+
+/* A lone button in a cell is not inside .inline-actions, so it needs the same floor to line up
+   with the rows that do have a group. */
+.data-table td > .btn-primary,
+.data-table td > .btn-secondary,
+.data-table td > .btn-success,
+.data-table td > .btn-danger {
+    min-width: 104px;
+}
+
 /* ========== DETAIL LISTS ========== */
 /* Label-and-value pairs for read-only pages, as opposed to .form-grid which is for inputs.
    Each pair is wrapped in a .detail-item so the two stay together as one grid cell - HTML5
@@ -346,6 +385,13 @@ body > .footer {
 
 .detail-item.wide {
     grid-column: 1 / -1;
+}
+
+/* A fixed three-column variant, for a full-width details card. The default grid is auto-fit, which
+   across a whole page would stretch to one long row; three columns makes five fields fall into two
+   readable rows instead. Collapses to one column on a narrow screen, in the media query below. */
+.detail-grid.three-up {
+    grid-template-columns: repeat(3, 1fr);
 }
 
 .detail-item dt {
@@ -622,9 +668,43 @@ body > .footer {
 }
 
 /* ========== RESPONSIVE ========== */
+/* ========== RESPONSIVE ==========
+   The two max-width breakpoints match style.css, so the nav bar and the page body reflow at the
+   same moment rather than a step apart. Two more bands sit either side of them: one that puts a
+   large monitor to use, and one for a viewport that is short rather than narrow.
+
+   Order matters. These have equal specificity, so the wider maximum has to come first or it would
+   override the narrower one at small sizes. */
+
+/* Large and ultrawide. The 1400px cap leaves a 2560px monitor mostly empty gutter, and the widest
+   tables have more to show. Prose is capped separately at 640px on .page-heading p, so the extra
+   width goes to tables and grids and never to a line of text. */
+@media (min-width: 1700px) {
+    .page-shell {
+        max-width: 1560px;
+    }
+}
+
+/* Small laptop down to tablet. Reclaim the gutters before anything is forced to reflow - at this
+   size a table would rather have the margin than a scrollbar. */
+@media (max-width: 1200px) {
+    .page-shell {
+        padding: 36px 3% 60px;
+    }
+
+    .surface-card {
+        padding: 24px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    }
+}
+
+/* Tablet and below. The page heading stops being a row, so the title and its action stack. */
 @media (max-width: 900px) {
     .page-shell {
-        padding: 30px 5% 50px;
+        padding: 30px 4% 50px;
     }
 
     .page-heading {
@@ -640,7 +720,86 @@ body > .footer {
         padding: 20px;
     }
 
+    .detail-grid.three-up {
+        grid-template-columns: 1fr;
+    }
+
     .error-card {
         margin: 30px auto;
+    }
+}
+
+/* Phone. Everything multi-column collapses to one, and the heading's action button spans the
+   width rather than sitting orphaned against one edge.
+
+   Tables deliberately keep their min-width and go on scrolling inside their card. A seven-column
+   queue cannot become readable on a 375px screen by reflowing; a horizontal scroll at least keeps
+   the rows intact. */
+@media (max-width: 600px) {
+    .page-shell {
+        padding: 24px 4% 40px;
+    }
+
+    .page-heading {
+        margin-bottom: 20px;
+    }
+
+    .page-heading h1 {
+        font-size: 24px;
+    }
+
+    .page-heading p {
+        font-size: 15px;
+    }
+
+    .page-heading > .btn-primary,
+    .page-heading > .btn-secondary,
+    .page-heading > .inline-actions {
+        width: 100%;
+    }
+
+    .page-heading > .inline-actions > * {
+        flex: 1 1 auto;
+    }
+
+    .section-title {
+        font-size: 18px;
+    }
+
+    .surface-card {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .stats-grid,
+    .split-layout,
+    .detail-grid,
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .stat-card strong {
+        font-size: 28px;
+    }
+}
+
+/* Short rather than narrow: a phone held sideways, or a half-height window on a laptop. Vertical
+   padding is what eats the little height there is, so trim that rather than the content. */
+@media (orientation: landscape) and (max-height: 600px) {
+    .page-shell {
+        padding-top: 20px;
+        padding-bottom: 32px;
+    }
+
+    .page-heading {
+        margin-bottom: 18px;
+    }
+
+    .error-card {
+        margin: 20px auto;
     }
 }

@@ -76,8 +76,13 @@
                     <!--/*
                       No "from" parameter, unlike the admin listings. This is the donor's own list,
                       so the detail page's default of "Back to my requests" is already correct.
+
+                      Wrapped in inline-actions even though there is only one button, so every
+                      Actions cell in the project shares the same structure and sizing.
                     */-->
-                    <a class="btn-secondary" th:href="@{/requests/{id}(id=${req.id})}">View</a>
+                    <div class="inline-actions">
+                        <a class="btn-secondary" th:href="@{/requests/{id}(id=${req.id})}">View</a>
+                    </div>
                 </td>
             </tr>
             </tbody>

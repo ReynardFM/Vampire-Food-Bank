@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Outfit:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
 </head>
 <!--/*
-  A donor's own profile, with their donation history beside it.
+  A donor's own profile, with their donation history underneath.
 
   Also where a donor is nudged to finish registering. Registration only collects a name, email and
   password, so blood group is null until the profile is completed - and a donor with no blood group
@@ -34,92 +34,101 @@
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-    <!--/* Two cards side by side, the same arrangement the dashboard uses for its charts. */-->
-    <div class="split-layout">
-        <section class="surface-card">
-            <h2 class="section-title">Details</h2>
+    <!--/*
+      Stacked rather than side by side. These two used to sit in a split-layout, which gave the
+      history table half the page and squeezed its dates and locations into a narrow column. Each
+      now gets a full-width row: the details spread comfortably across three columns, and the table
+      has the whole page to itself.
+    */-->
+    <section class="surface-card">
+        <h2 class="section-title">Details</h2>
 
-            <dl class="detail-grid">
-                <div class="detail-item wide">
-                    <dt>Name</dt>
-                    <dd th:text="${user.fullName}">Jane Doe</dd>
-                </div>
-                <div class="detail-item wide">
-                    <dt>Email</dt>
-                    <dd th:text="${user.email}">jane@example.com</dd>
-                </div>
-                <div class="detail-item">
-                    <dt>Blood group</dt>
-                    <dd>
-                        <span class="badge badge-blood" th:if="${user.bloodGroup != null}"
-                              th:text="${user.bloodGroup.displayName}">A+</span>
-                        <span th:if="${user.bloodGroup == null}">Not set</span>
-                    </dd>
-                </div>
-                <div class="detail-item">
-                    <dt>Phone</dt>
-                    <dd th:text="${user.phoneNumber != null ? user.phoneNumber : 'Not set'}">+1 416 555 0123</dd>
-                </div>
-                <!--/*
-                  Blood group standing in for "is this profile complete". It is the field that
-                  actually matters: without it the donor is invisible to search and cannot have a
-                  donation linked to a request.
-
-                  The badge colours here are borrowed as plain red and green rather than for their
-                  request-status meaning.
-                */-->
-                <div class="detail-item wide">
-                    <dt>Status</dt>
-                    <dd>
-                        <span class="badge badge-rejected" th:if="${user.bloodGroup == null}">PROFILE INCOMPLETE</span>
-                        <span class="badge badge-approved" th:if="${user.bloodGroup != null}">ACTIVE DONOR</span>
-                    </dd>
-                </div>
-            </dl>
-
-            <!--/* The way into the second half of registration, shown only while it is unfinished. */-->
-            <div class="inline-actions" style="margin-top: 24px;" th:if="${user.bloodGroup == null}">
-                <a class="btn-primary" th:href="@{/donor/complete-profile}">
-                    <i class="fa-solid fa-user-check"></i> Complete profile now
-                </a>
+        <!--/*
+          three-up fixes the grid at three columns, so these five fields fall into two rows rather
+          than stretching into one long line across the whole page. It collapses to a single column
+          on a narrow screen.
+        */-->
+        <dl class="detail-grid three-up">
+            <div class="detail-item">
+                <dt>Name</dt>
+                <dd th:text="${user.fullName}">Jane Doe</dd>
             </div>
-        </section>
+            <div class="detail-item">
+                <dt>Email</dt>
+                <dd th:text="${user.email}">jane@example.com</dd>
+            </div>
+            <div class="detail-item">
+                <dt>Blood group</dt>
+                <dd>
+                    <span class="badge badge-blood" th:if="${user.bloodGroup != null}"
+                          th:text="${user.bloodGroup.displayName}">A+</span>
+                    <span th:if="${user.bloodGroup == null}">Not set</span>
+                </dd>
+            </div>
+            <div class="detail-item">
+                <dt>Phone</dt>
+                <dd th:text="${user.phoneNumber != null ? user.phoneNumber : 'Not set'}">+1 416 555 0123</dd>
+            </div>
+            <!--/*
+              Blood group standing in for "is this profile complete". It is the field that actually
+              matters: without it the donor is invisible to search and cannot have a donation linked
+              to a request.
 
-        <section class="surface-card table-wrap">
-            <h2 class="section-title">Donation history</h2>
+              The badge colours here are borrowed as plain red and green rather than for their
+              request-status meaning.
+            */-->
+            <div class="detail-item">
+                <dt>Status</dt>
+                <dd>
+                    <span class="badge badge-rejected" th:if="${user.bloodGroup == null}">PROFILE INCOMPLETE</span>
+                    <span class="badge badge-approved" th:if="${user.bloodGroup != null}">ACTIVE DONOR</span>
+                </dd>
+            </div>
+        </dl>
 
-            <table class="data-table">
-                <thead>
-                <tr>
-                    <th th:replace="~{fragments/sort :: sortable('Date', 'donationDate', ${sort}, ${dir}, '/donor/profile')}"></th>
-                    <th th:replace="~{fragments/sort :: sortable('Location', 'location', ${sort}, ${dir}, '/donor/profile')}"></th>
-                    <th th:replace="~{fragments/sort :: sortable('Units', 'unitsDonated', ${sort}, ${dir}, '/donor/profile')}"></th>
-                </tr>
-                </thead>
-                <tbody>
-                <!--/*
-                  Every table in this project pairs an empty-state row with the th:each below it.
-                  Thymeleaf has no "else" for a loop, so the two are separate conditions - a loop
-                  over an empty list simply renders nothing, leaving a headed table with no body.
-                */-->
-                <tr th:if="${#lists.isEmpty(donations)}">
-                    <td class="empty-state" colspan="3">
-                        <i class="fa-regular fa-folder-open"></i> No donations recorded yet.
-                    </td>
-                </tr>
-                <tr th:each="donation : ${donations}">
-                    <td th:text="${#temporals.format(donation.donationDate, 'MMM d, yyyy')}">Jul 28, 2026</td>
-                    <td th:text="${donation.location}">Toronto General Hospital</td>
-                    <td>
-                        <span class="badge badge-blood" th:text="${donation.unitsDonated} + ' units'">1 units</span>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+        <!--/* The way into the second half of registration, shown only while it is unfinished. */-->
+        <div class="inline-actions" style="margin-top: 24px;" th:if="${user.bloodGroup == null}">
+            <a class="btn-primary" th:href="@{/donor/complete-profile}">
+                <i class="fa-solid fa-user-check"></i> Complete profile now
+            </a>
+        </div>
+    </section>
 
-            <nav th:replace="~{fragments/pagination :: pager(${page}, ${sort}, ${dir}, '/donor/profile')}"></nav>
-        </section>
-    </div>
+    <section class="surface-card table-wrap" style="margin-top: 24px;">
+        <h2 class="section-title">Donation history</h2>
+
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th th:replace="~{fragments/sort :: sortable('Date', 'donationDate', ${sort}, ${dir}, '/donor/profile')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Location', 'location', ${sort}, ${dir}, '/donor/profile')}"></th>
+                <th th:replace="~{fragments/sort :: sortable('Units', 'unitsDonated', ${sort}, ${dir}, '/donor/profile')}"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <!--/*
+              Every table in this project pairs an empty-state row with the th:each below it.
+              Thymeleaf has no "else" for a loop, so the two are separate conditions - a loop over
+              an empty list simply renders nothing, leaving a headed table with no body.
+            */-->
+            <tr th:if="${#lists.isEmpty(donations)}">
+                <td class="empty-state" colspan="3">
+                    <i class="fa-regular fa-folder-open"></i> No donations recorded yet.
+                </td>
+            </tr>
+            <tr th:each="donation : ${donations}">
+                <td th:text="${#temporals.format(donation.donationDate, 'MMM d, yyyy')}">Jul 28, 2026</td>
+                <td th:text="${donation.location != null ? donation.location : 'Not recorded'}">Toronto General Hospital</td>
+                <td>
+                    <span class="badge badge-blood"
+                          th:text="${donation.unitsDonated} + (${donation.unitsDonated} == 1 ? ' unit' : ' units')">1 unit</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <nav th:replace="~{fragments/pagination :: pager(${page}, ${sort}, ${dir}, '/donor/profile')}"></nav>
+    </section>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
