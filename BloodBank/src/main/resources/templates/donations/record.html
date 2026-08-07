@@ -58,6 +58,7 @@
                 <div class="form-field">
                     <label for="unitsDonated">Units donated</label>
                     <input id="unitsDonated" type="number" min="1" th:field="*{unitsDonated}">
+                    <span class="field-hint">One unit is a standard collection of about 450 mL.</span>
                     <span class="field-error" th:if="${#fields.hasErrors('unitsDonated')}" th:errors="*{unitsDonated}"></span>
                 </div>
                 <div class="form-field full">

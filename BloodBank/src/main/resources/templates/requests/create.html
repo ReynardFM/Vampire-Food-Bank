@@ -57,9 +57,16 @@
                     <span class="field-error" th:if="${#fields.hasErrors('requestedBloodGroup')}" th:errors="*{requestedBloodGroup}"></span>
                 </div>
 
+                <!--/*
+                  A unit is the standard collection, not an arbitrary number - saying so here means
+                  the figure can be entered with some idea of what it represents. Kept as a whole
+                  count rather than a volume because that is how blood is actually collected and
+                  issued, and because units needed and units collected are compared directly.
+                */-->
                 <div class="form-field">
                     <label for="unitsNeeded">Units needed</label>
                     <input id="unitsNeeded" type="number" th:field="*{unitsNeeded}" min="1" required>
+                    <span class="field-hint">One unit is a standard collection of about 450 mL.</span>
                     <span class="field-error" th:if="${#fields.hasErrors('unitsNeeded')}" th:errors="*{unitsNeeded}"></span>
                 </div>
 
