@@ -3,9 +3,8 @@
 <!--/*
   The site footer, on every page.
 
-  Unlike the header this takes no parameters, because none of it changes with who is looking. The
-  Dashboard link is shown to everyone even though only administrators can open it - a donor who
-  clicks it is redirected to sign in and then refused, which is a bit blunt.
+  It takes no parameters, unlike the header, and reads "user" straight from the model instead -
+  CurrentUserAdvice supplies it for every controller, so it is there whichever page renders this.
 */-->
 <body>
 <footer class="footer" th:fragment="footer">
@@ -20,12 +19,22 @@
         <p>Connecting generous donors with patients in need through a secure, reliable, and compassionate blood donation platform.</p>
     </div>
 
+    <!--/*
+      The links change with who is looking, even though the fragment takes no parameters -
+      CurrentUserAdvice puts "user" in the model for every controller, so it is readable here.
+
+      Previously this offered Register to people already signed in, and Dashboard to everyone: a
+      member who clicked it was refused and landed on the 403 page. A link nobody may follow is
+      worse than no link.
+    */-->
     <div class="footer_middle">
         <h4>Quick Links</h4>
         <a th:href="@{/home}">Home</a>
-        <a th:href="@{/register}">Register</a>
         <a th:href="@{/about-us}">About Us</a>
-        <a th:href="@{/dashboard}">Dashboard</a>
+        <a th:if="${user == null}" th:href="@{/register}">Register</a>
+        <a th:if="${user == null}" th:href="@{/login}">Log In</a>
+        <a th:if="${user != null}" th:href="@{/requests/list}">My Requests</a>
+        <a th:if="${user != null and user.role.name() == 'ADMIN'}" th:href="@{/dashboard}">Dashboard</a>
     </div>
 
     <div class="footer_right">
