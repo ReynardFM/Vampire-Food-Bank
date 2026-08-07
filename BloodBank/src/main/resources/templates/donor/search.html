@@ -46,8 +46,12 @@
       request, which is what makes the job resumable.
 
       It disappears on its own once the request is fulfilled, because the controller only sets this
-      attribute for a request that is still APPROVED. "Leave for later" simply drops requestId from
-      the URL - the request stays approved and can be picked up again from the request list.
+      attribute for a request that is still APPROVED.
+
+      "Leave for later" goes back to the dashboard. Stepping away from the job is a decision to do
+      something else, not to keep searching, so dropping requestId and leaving you on the same
+      results was a half-measure. The request stays approved either way and can be picked up again
+      from the request list or from a daily report.
     */-->
     <section class="surface-card fulfilling-banner" th:if="${fulfillingRequest != null}">
         <div>
@@ -67,7 +71,7 @@
             <a class="btn-secondary" th:href="@{/requests/{id}(id=${fulfillingRequest.id}, from='all')}">
                 View request
             </a>
-            <a class="btn-secondary" th:href="@{/donor/search(bloodGroup=${selectedBloodGroup})}">
+            <a class="btn-secondary" th:href="@{/dashboard}">
                 <i class="fa-solid fa-xmark"></i> Leave for later
             </a>
         </div>
