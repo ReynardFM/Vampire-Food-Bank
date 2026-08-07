@@ -46,7 +46,29 @@ class AdminSortingTest {
     void pendingQueueFallsBackWhenTheSortFieldIsUnknown() throws Exception {
         mockMvc.perform(get("/admin/pending").param("sort", "notes"))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("sort", "requestDate"));
+                .andExpect(model().attribute("sort", "urgencyLevel"));
+    }
+
+    /**
+     * The queue is a triage list, so it opens on urgency rather than arrival - unlike every other
+     * listing, which is a record and opens newest-first.
+     */
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void pendingQueueOpensOnUrgencyWithTheMostUrgentFirst() throws Exception {
+        mockMvc.perform(get("/admin/pending"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("sort", "urgencyLevel"))
+                .andExpect(model().attribute("dir", "desc"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void everyOtherListingStillOpensNewestFirst() throws Exception {
+        mockMvc.perform(get("/admin/requests"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("sort", "requestDate"))
+                .andExpect(model().attribute("dir", "desc"));
     }
 
     /** Urgency is requested by its URL name but ordered on the mirrored severity column. */

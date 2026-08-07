@@ -51,22 +51,31 @@ public class AdminController {
 
     // The review queue: everything still waiting for a decision.
     //
-    // @RequestParam with a defaultValue means these are optional - arriving at /admin/pending with
-    // no query string gives newest first, page zero.
+    // Ordered by urgency rather than by arrival. This queue is a triage list, and the question it
+    // answers is "what needs attention first", not "what came in last" - a critical request raised
+    // this morning matters more than a routine one raised yesterday. Every other listing is a
+    // record and stays newest-first.
+    //
+    // The sort name is urgencyLevel but the ordering happens on urgencySeverity, because the level
+    // is stored as text and sorting that gives CRITICAL, HIGH, LOW, MEDIUM. Descending puts
+    // CRITICAL at the top. See REQUEST_SORT_FIELDS.
     @GetMapping("/pending")
     public String viewPendingRequests(
-            @RequestParam(defaultValue = "requestDate") String sort,
+            @RequestParam(defaultValue = "urgencyLevel") String sort,
             @RequestParam(defaultValue = "desc") String dir,
             @RequestParam(defaultValue = "0") int page,
             Model model,
             RedirectAttributes redirectAttributes) {
 
         SortRequest sorting = SortRequest.of(
-                REQUEST_SORT_FIELDS, sort, dir, "requestDate", Sort.Direction.DESC);
+                REQUEST_SORT_FIELDS, sort, dir, "urgencyLevel", Sort.Direction.DESC);
 
         try {
+            // Oldest first within whatever column is chosen. On the default that reads as "most
+            // urgent, and among those the one that has waited longest" - which is the whole triage
+            // question. Without it the CRITICAL rows come back in no defined order.
             Page<DonationRequest> pendingRequests = requestService.getPendingRequests(
-                    pageSupport.of(page, sorting.toSort()));
+                    pageSupport.of(page, sorting.toSortThenBy("requestDate", Sort.Direction.ASC)));
             model.addAttribute("requests", pendingRequests.getContent());
             model.addAttribute("page", pendingRequests);
             // Lets the view flag rows that arrived today without doing date maths in Thymeleaf.
@@ -110,6 +119,8 @@ public class AdminController {
             // to the donation form. The request staying APPROVED is what makes this resumable: the
             // administrator can walk away and pick it up from the request list later.
             redirectAttributes.addAttribute("requestId", approved.getId());
+            // Where "Leave for later" should return to. A short token, never a URL.
+            redirectAttributes.addAttribute("from", "pending");
             return "redirect:/donor/search";
         } catch (IllegalStateException e) {
             // Thrown by approveRequest when the request is no longer PENDING - usually because

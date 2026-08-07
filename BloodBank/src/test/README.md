@@ -1,6 +1,6 @@
 # Test Guide
 
-49 tests across 10 classes. This explains what each one checks and why it's worth having.
+58 tests across 11 classes. This explains what each one checks and why it's worth having.
 
 ## Running them
 
@@ -135,19 +135,38 @@ requests as today's work. These pin the separation down:
 - A day with nothing on it reports itself as empty
 - The detail page gets the rows behind each figure, not just the counts
 
-### `DatabaseSeederTest` — 3 tests
+### `DatabaseSeederTest` — 4 tests
 
 The seeder runs on every application start, so the important property is that running it
 twice changes nothing. This test runs it a second time and asserts the row counts are
 identical. It also checks an administrator exists, and that every blood group has at
 least one donor so search is never empty.
 
-### `AdminSortingTest` — 5 tests
+### `AdminSortingTest` — 7 tests
 
 `Sort.by()` accepts any text, and an unknown field name throws an exception — so
 `/admin/donors?sort=password` would be a 500 error without the whitelists in the
 controllers. These tests confirm valid sorts work, invalid ones quietly fall back to a
-default, urgency maps to its severity column, and donors get 403 on admin pages.
+default, urgency maps to its severity column, and members get 403 on admin pages.
+
+Two more pin the opening order. The pending queue is a triage list, so it opens on
+urgency with the most urgent first; every other listing is a record and opens
+newest-first. Those defaults are easy to change by accident when adjusting a whitelist.
+
+### `SortRequestTest` — 6 tests
+
+`SortRequest` is the one place a query string turns into an `ORDER BY`, so it is also the
+one place a hand-edited `?sort=` could reach the database. Plain unit tests, no Spring
+context needed:
+
+- An allowed field is used as asked; an unknown one falls back to the default
+- An unrecognised direction falls back rather than meaning the opposite of the default
+- A mapped field orders on its real property — urgency is asked for by name but sorted
+  on the mirrored numeric column
+- **The tie-break is appended after the chosen column.** The pending queue's real order is
+  most urgent first, and among equally urgent requests the one that has waited longest
+- The tie-break is skipped when it repeats the chosen column, which would otherwise emit
+  `request_date DESC, request_date ASC`
 
 ### `ProfileDateBindingTest` — 3 tests
 

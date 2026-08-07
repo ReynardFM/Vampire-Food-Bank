@@ -61,6 +61,24 @@ final class SortRequest {
         return Sort.by(direction, property);
     }
 
+    /**
+     * The chosen column, then a tie-break for rows that match on it.
+     *
+     * Sorting by urgency alone leaves every CRITICAL request in whatever order the database
+     * happened to return, which for a triage queue is the half of the question that matters -
+     * "most urgent" is only useful if the oldest of the urgent ones comes first.
+     *
+     * Skipped when the tie-break repeats the column already being sorted on, which would otherwise
+     * emit "ORDER BY request_date DESC, request_date ASC" - harmless but nonsense.
+     */
+    Sort toSortThenBy(String tieBreak, Sort.Direction tieBreakDirection) {
+        if (property.equals(tieBreak)) {
+            return toSort();
+        }
+
+        return toSort().and(Sort.by(tieBreakDirection, tieBreak));
+    }
+
     // Puts the URL-facing name and direction in the model for the sortable column headers.
     void applyTo(Model model) {
         model.addAttribute("sort", name);
