@@ -115,31 +115,6 @@ body,
     background: #b61c1c;
 }
 
-.nav-logout-form {
-    display: inline-flex;
-    flex: 0 0 auto;
-    margin: 0;
-}
-
-.nav-logout {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    padding: 10px 11px;
-    border: 0;
-    border-radius: 45px;
-    background: transparent;
-    color: white;
-    font: 600 14px "Outfit", sans-serif;
-    cursor: pointer;
-    transition: transform .2s, background-color .2s;
-}
-
-.nav-logout:hover {
-    transform: translateY(-2px);
-    background: #b61c1c;
-}
-
 .welcome-text {
     display: inline-flex;
     align-items: center;
@@ -234,16 +209,7 @@ body,
 }
 
 /* ========== SORTABLE TABLE HEADERS ========== */
-/* Lives here rather than in pages.css so the inline-styled tables can use it too. */
-
-/*
- * The request-list and donation-history tables carried this on every <th> as an inline style.
- * The shared header fragment cannot reproduce inline styles, so it moved here.
- */
-.simple-table th {
-    padding: 12px 8px;
-    color: #555;
-}
+/* Used by the shared sort fragment, which every listing table pulls in. */
 
 .sortable-col a {
     display: inline-flex;
@@ -542,11 +508,6 @@ body,
 
     .right_nav a {
         width: auto;
-        padding: 10px 12px;
-        font-size: 15px;
-    }
-
-    .nav-logout {
         padding: 10px 12px;
         font-size: 15px;
     }
