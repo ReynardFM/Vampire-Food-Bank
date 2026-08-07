@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Donors - LifeLine Blood Bank</title>
+    <title>Manage Accounts - LifeLine Blood Bank</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/pages.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -24,7 +24,7 @@
             <div class="eyebrow">Administration</div>
             <h1>Manage Accounts</h1>
             <p>
-                Every active account. Deactivating a donor hides them from search and blocks sign-in;
+                Every active account. Deactivating one hides it from donor search and blocks sign-in;
                 administrator accounts are protected and cannot be deactivated here.
             </p>
         </div>
@@ -50,7 +50,7 @@
             <tbody>
             <tr th:if="${#lists.isEmpty(donors)}">
                 <td class="empty-state" colspan="7">
-                    <i class="fa-regular fa-face-smile"></i> No active donors yet.
+                    <i class="fa-regular fa-face-smile"></i> No active accounts yet.
                 </td>
             </tr>
             <tr th:each="donor : ${donors}">
