@@ -89,7 +89,7 @@
                           blood group and the request id already filled in.
                         */-->
                         <a class="btn-success" th:if="${request.status.name() == 'APPROVED'}"
-                           th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id})}">
+                           th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id}, from='all')}">
                             <i class="fa-solid fa-magnifying-glass"></i> Find donors
                         </a>
                     </div>

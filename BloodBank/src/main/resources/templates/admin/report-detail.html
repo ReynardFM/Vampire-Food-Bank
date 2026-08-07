@@ -110,7 +110,7 @@
                               up wherever it was left - the same link the request list offers.
                             */-->
                             <a class="btn-success" th:if="${request.status.name() == 'APPROVED'}"
-                               th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id})}">
+                               th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id}, from='reports')}">
                                 <i class="fa-solid fa-magnifying-glass"></i> Find donors
                             </a>
                         </div>
@@ -164,7 +164,7 @@
                               up wherever it was left - the same link the request list offers.
                             */-->
                             <a class="btn-success" th:if="${request.status.name() == 'APPROVED'}"
-                               th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id})}">
+                               th:href="@{/donor/search(bloodGroup=${request.requestedBloodGroup}, requestId=${request.id}, from='reports')}">
                                 <i class="fa-solid fa-magnifying-glass"></i> Find donors
                             </a>
                         </div>

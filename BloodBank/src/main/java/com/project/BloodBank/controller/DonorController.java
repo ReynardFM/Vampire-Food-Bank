@@ -22,6 +22,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Map;
 import java.util.Set;
 
 // A donor's own area: their profile, their donation history, and donor search.
@@ -57,6 +58,19 @@ public class DonorController {
     public Gender[] genders() {
         return Gender.values();
     }
+
+    // Where "Leave for later" goes, keyed by a short token rather than a URL taken from the query
+    // string - the same reasoning as RETURN_TARGETS in DonationRequestController. Accepting a URL
+    // would let a crafted link bounce somebody off this domain from a page they trust.
+    //
+    // The reports entry returns to the list rather than the day it came from, because a token
+    // cannot carry a date. One step from where you were, which is close enough to be useful.
+    private static final Map<String, String> LEAVE_TARGETS = Map.of(
+            "pending", "/admin/pending",
+            "all", "/admin/requests",
+            "reports", "/admin/reports");
+
+    private static final String LEAVE_FALLBACK = "/dashboard";
 
     // The profile form is shared by both flows, so the view has to be told where to post back to.
     private static final String PROFILE_EDIT_ACTION = "/donor/profile-edit";
@@ -184,10 +198,20 @@ public class DonorController {
             @RequestParam(defaultValue = "asc") String dir,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Long requestId,
+            @RequestParam(required = false) String from,
             @AuthenticationPrincipal User principal,
             Model model) {
 
         boolean isAdmin = principal != null && principal.getRole() == Role.ADMIN;
+
+        // Where leaving the fulfilment returns to. Note the null check rather than a bare
+        // getOrDefault: Map.of rejects a null key even on lookup, and "from" is absent on an
+        // ordinary search.
+        model.addAttribute("leaveUrl",
+                from == null ? LEAVE_FALLBACK : LEAVE_TARGETS.getOrDefault(from, LEAVE_FALLBACK));
+        // Echoed so the page's own links - the search form, the column headers, the pager - carry
+        // it too. Losing it mid-search would silently reset where "Leave for later" goes.
+        model.addAttribute("from", from);
 
         // Searching on behalf of an approved request, which is what turns this page into a step in
         // a workflow rather than a lookup. Admin-only, and quietly ignored once the request is no

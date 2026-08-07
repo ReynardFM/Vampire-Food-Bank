@@ -290,6 +290,22 @@ body > .footer {
     transform: translateY(-2px);
 }
 
+/* A disabled button keeps its colour by default and still lifts on hover, which reads as clickable
+   when it is not. The :hover override has to be spelled out because the rule above is just as
+   specific and comes first. */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-success:disabled,
+.btn-danger:disabled,
+.btn-primary:disabled:hover,
+.btn-secondary:disabled:hover,
+.btn-success:disabled:hover,
+.btn-danger:disabled:hover {
+    opacity: .45;
+    transform: none;
+    cursor: not-allowed;
+}
+
 .btn-primary {
     background: #d62929;
     color: #fff;
@@ -430,6 +446,12 @@ body > .footer {
     grid-column: 1 / -1;
 }
 
+/* A grid cell holding a button rather than an input. Inputs are meant to fill their column, but a
+   button stretched across half a form reads as a banner, so this one keeps its natural width. */
+.form-field.action {
+    align-items: flex-start;
+}
+
 .form-field label {
     margin-bottom: 8px;
     color: #333;
@@ -460,6 +482,17 @@ body > .footer {
 .form-field textarea:focus {
     border-color: #d62929;
     box-shadow: 0 0 0 3px rgba(214, 41, 41, .12);
+}
+
+/* Greyed rather than merely inert. A disabled field that looks editable invites a click and gives
+   no reason for the refusal. */
+.form-field input:disabled,
+.form-field select:disabled,
+.form-field textarea:disabled {
+    border-color: #e6e6e6;
+    background: #f4f4f4;
+    color: #888;
+    cursor: not-allowed;
 }
 
 .field-error {

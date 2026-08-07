@@ -50,8 +50,12 @@ public class DonationController {
     @GetMapping("/record/{donorId}")
     public String recordForm(@PathVariable Long donorId,
                              @RequestParam(required = false) Long requestId,
+                             @RequestParam(required = false) String from,
                              Model model,
                              RedirectAttributes redirectAttributes) {
+        // Carried through so that a partial donation returns to a search that still knows where the
+        // fulfilment started. The form posts it straight back on its action URL.
+        model.addAttribute("from", from);
         try {
             addFormContext(donorId, model);
         } catch (ResourceNotFoundException e) {
@@ -91,6 +95,7 @@ public class DonationController {
     public String recordDonation(
             @PathVariable Long donorId,
             @Valid @ModelAttribute("donationDto") DonationRecordDto dto,
+            @RequestParam(required = false) String from,
             BindingResult result,
             Model model,
             RedirectAttributes redirectAttributes) {
@@ -107,13 +112,14 @@ public class DonationController {
 
         if (result.hasErrors()) {
             addFormContext(donorId, model);
+            model.addAttribute("from", from);
             return "donations/record";
         }
 
         try {
             // The donor gives the blood; the signed-in administrator is the one entering it.
             donationService.recordDonation(dto, donor, userService.getCurrentUser());
-            return afterRecording(dto, donor, redirectAttributes);
+            return afterRecording(dto, donor, from, redirectAttributes);
         } catch (IllegalStateException e) {
             // Raised by recordDonation for a request that is no longer approved, or one this donor's
             // blood cannot serve. The message says which, so it is shown rather than replaced.
@@ -141,7 +147,7 @@ public class DonationController {
     // The request is re-read rather than taken from the saved donation. recordDonation runs in its
     // own transaction, so by the time this executes the entity it returned is detached and its
     // status is whatever it was before fulfilment was considered.
-    private String afterRecording(DonationRecordDto dto, User donor,
+    private String afterRecording(DonationRecordDto dto, User donor, String from,
                                   RedirectAttributes redirectAttributes) {
 
         if (dto.getLinkedRequestId() == null) {
@@ -161,6 +167,7 @@ public class DonationController {
                             + ". Request #" + linked.getId() + " still needs " + outstanding + ".");
             redirectAttributes.addAttribute("bloodGroup", linked.getRequestedBloodGroup());
             redirectAttributes.addAttribute("requestId", linked.getId());
+            redirectAttributes.addAttribute("from", from);
             return "redirect:/donor/search";
         }
 

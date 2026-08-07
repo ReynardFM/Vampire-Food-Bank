@@ -48,10 +48,13 @@
       It disappears on its own once the request is fulfilled, because the controller only sets this
       attribute for a request that is still APPROVED.
 
-      "Leave for later" goes back to the dashboard. Stepping away from the job is a decision to do
-      something else, not to keep searching, so dropping requestId and leaving you on the same
-      results was a half-measure. The request stays approved either way and can be picked up again
-      from the request list or from a daily report.
+      "Leave for later" returns to wherever the fulfilment was started - the pending queue, the
+      request list, or the reports. The controller resolves that from a short token rather than a
+      URL in the query string, so it cannot be turned into a link off this domain. It falls back to
+      the dashboard when there is no token to go on.
+
+      The request stays approved either way and can be picked up again from the request list or a
+      daily report.
     */-->
     <section class="surface-card fulfilling-banner" th:if="${fulfillingRequest != null}">
         <div>
@@ -71,7 +74,7 @@
             <a class="btn-secondary" th:href="@{/requests/{id}(id=${fulfillingRequest.id}, from='all')}">
                 View request
             </a>
-            <a class="btn-secondary" th:href="@{/dashboard}">
+            <a class="btn-secondary" th:href="@{${leaveUrl}}">
                 <i class="fa-solid fa-xmark"></i> Leave for later
             </a>
         </div>
@@ -92,17 +95,52 @@
             <input type="hidden" name="requestId"
                    th:if="${fulfillingRequest != null}"
                    th:value="${fulfillingRequest.id}">
+            <!--/* Same for the return token, or searching again forgets where you started. */-->
+            <input type="hidden" name="from" th:if="${from != null}" th:value="${from}">
+
+            <!--/*
+              While a request is being fulfilled the blood group is not a choice - it is whatever
+              the patient needs, and searching for a different one would list people who cannot
+              help them. Both controls are disabled rather than hidden, so the group stays visible
+              and it is clear the page is locked to a job rather than broken.
+
+              A disabled control is not submitted, so the group rides along in a hidden field.
+              Nothing can normally submit this form while the button is disabled, but the results
+              would quietly widen to everyone if anything did.
+            */-->
+            <input type="hidden" name="bloodGroup"
+                   th:if="${fulfillingRequest != null and selectedBloodGroup != null}"
+                   th:value="${selectedBloodGroup}">
+
             <div class="form-grid">
                 <div class="form-field">
                     <label for="bloodGroup">Blood group needed</label>
-                    <select id="bloodGroup" name="bloodGroup" required>
+                    <select id="bloodGroup" name="bloodGroup" required
+                            th:disabled="${fulfillingRequest != null}">
                         <option value="">Choose a blood group</option>
                         <option th:each="group : ${bloodGroups}" th:value="${group}" th:text="${group.displayName}"
                                 th:selected="${selectedBloodGroup == group}"></option>
                     </select>
+                    <span class="field-hint" th:if="${fulfillingRequest != null}">
+                        Set by request #<span th:text="${fulfillingRequest.id}">12</span>. Leave the
+                        fulfilment to search for a different group.
+                    </span>
                 </div>
-                <div style="display:flex; align-items:flex-end;">
-                    <button class="btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search donors</button>
+                <!--/*
+                  A form-field like its neighbour, rather than a flex box aligned to the bottom.
+                  Bottom alignment lined the button up with whatever the tallest cell ended at, so
+                  adding the hint under the select pushed it out of line. Matching the structure -
+                  a label of the same height, then the control - keeps the button level with the
+                  select whatever appears beneath it.
+
+                  The label is a spacer, hidden from screen readers; the button carries its own text.
+                */-->
+                <div class="form-field action">
+                    <label aria-hidden="true">&nbsp;</label>
+                    <button class="btn-primary" type="submit"
+                            th:disabled="${fulfillingRequest != null}">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search donors
+                    </button>
                 </div>
             </div>
         </form>
@@ -149,8 +187,8 @@
         <table class="data-table" th:with="isAdmin=${user != null and user.role.name() == 'ADMIN'}">
             <thead>
             <tr>
-                <th th:replace="~{fragments/sort :: sortableFiltered('Donor', 'fullName', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
-                <th th:replace="~{fragments/sort :: sortableFiltered('Blood group', 'bloodGroup', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Donor', 'fullName', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null}, ${from})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Blood group', 'bloodGroup', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null}, ${from})}"></th>
                 <!--/*
                   The wrapper is not decoration. Thymeleaf applies its attributes in a fixed order,
                   and th:replace runs before th:if - so putting both on one tag would replace the
@@ -158,11 +196,11 @@
                   around it is the way to make it apply.
                 */-->
                 <th:block th:if="${isAdmin}">
-                    <th th:replace="~{fragments/sort :: sortableFiltered('Phone', 'phoneNumber', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
+                    <th th:replace="~{fragments/sort :: sortableFiltered('Phone', 'phoneNumber', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null}, ${from})}"></th>
                 </th:block>
-                <th th:replace="~{fragments/sort :: sortableFiltered('Last donation', 'lastDonationDate', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
+                <th th:replace="~{fragments/sort :: sortableFiltered('Last donation', 'lastDonationDate', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null}, ${from})}"></th>
                 <th:block th:if="${isAdmin}">
-                    <th th:replace="~{fragments/sort :: sortableFiltered('Address', 'address', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></th>
+                    <th th:replace="~{fragments/sort :: sortableFiltered('Address', 'address', ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null}, ${from})}"></th>
                     <th>Actions</th>
                 </th:block>
             </tr>
@@ -200,7 +238,8 @@
                         */-->
                         <a class="btn-success"
                            th:href="@{/donations/record/{id}(id=${donor.id},
-                                     requestId=${fulfillingRequest != null ? fulfillingRequest.id : null})}">
+                                     requestId=${fulfillingRequest != null ? fulfillingRequest.id : null},
+                                     from=${from})}">
                             <i class="fa-solid fa-droplet"></i> Record donation
                         </a>
                     </div>
@@ -210,7 +249,7 @@
         </table>
     </section>
 
-    <nav th:replace="~{fragments/pagination :: pagerFiltered(${page}, ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null})}"></nav>
+    <nav th:replace="~{fragments/pagination :: pagerFiltered(${page}, ${sort}, ${dir}, '/donor/search', ${selectedBloodGroup}, ${fulfillingRequest != null ? fulfillingRequest.id : null}, ${from})}"></nav>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

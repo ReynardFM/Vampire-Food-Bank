@@ -56,8 +56,8 @@
           Carrying it matters: losing it mid-search silently ends the fulfilment session, and the
           administrator has to pick the request out of a dropdown again.
         */-->
-        <th th:fragment="sortableFiltered(label, field, sort, dir, url, bloodGroup, requestId)" class="sortable-col">
-            <a th:href="@{${url}(bloodGroup=${bloodGroup}, requestId=${requestId}, sort=${field},
+        <th th:fragment="sortableFiltered(label, field, sort, dir, url, bloodGroup, requestId, from)" class="sortable-col">
+            <a th:href="@{${url}(bloodGroup=${bloodGroup}, requestId=${requestId}, from=${from}, sort=${field},
                                  dir=${sort == field and dir == 'asc' ? 'desc' : 'asc'})}"
                th:classappend="${sort == field ? (dir == 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}"
                th:text="${label}">Column</a>

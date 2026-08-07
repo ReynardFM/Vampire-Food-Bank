@@ -48,7 +48,9 @@
             </div>
         </div>
 
-        <form th:action="@{/donations/record/{id}(id=${donor.id})}" th:object="${donationDto}" method="post">
+        <!--/* from rides on the action URL rather than a hidden field - fewer moving parts. */-->
+        <form th:action="@{/donations/record/{id}(id=${donor.id}, from=${from})}"
+              th:object="${donationDto}" method="post">
             <div class="form-grid">
                 <div class="form-field">
                     <label for="donationDate">Donation date</label>
