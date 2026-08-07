@@ -46,6 +46,7 @@ class DonationServiceTest {
     // by the helpers below belongs to the requester, so the donor is always a third party - which
     // is the ordinary case, and keeps the self-donation rule from firing in tests about other things.
     private User requester;
+    private User admin;
 
     @BeforeEach
     void setUp() {
@@ -53,6 +54,9 @@ class DonationServiceTest {
                 person("donor-history@test.local", "History Donor", BloodGroup.A_POSITIVE));
         requester = userRepository.save(
                 person("requester@test.local", "Request Raiser", BloodGroup.A_POSITIVE));
+        // Whoever enters a donation. Recorded against any request the donation closes.
+        admin = userRepository.save(
+                person("recorder@test.local", "Recording Admin", BloodGroup.O_NEGATIVE));
     }
 
     private User person(String email, String name, BloodGroup group) {
@@ -60,7 +64,7 @@ class DonationServiceTest {
         user.setEmail(email);
         user.setFullName(name);
         user.setPassword(passwordEncoder.encode("Password123!"));
-        user.setRole(Role.DONOR);
+        user.setRole(Role.USER);
         user.setActive(true);
         user.setBloodGroup(group);
         return user;
@@ -111,7 +115,7 @@ class DonationServiceTest {
     void recordingAnUnlinkedDonationUpdatesTheDonorsLastDonationDate() {
         LocalDate when = LocalDate.now().minusDays(3);
 
-        Donation saved = donationService.recordDonation(dto(when, null), donor);
+        Donation saved = donationService.recordDonation(dto(when, null), donor, admin);
 
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getLinkedRequest()).isNull();
@@ -125,7 +129,7 @@ class DonationServiceTest {
     void linkingToAnApprovedRequestMarksItFulfilled() {
         DonationRequest approved = request(RequestStatus.APPROVED);
 
-        donationService.recordDonation(dto(LocalDate.now(), approved.getId()), donor);
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId()), donor, admin);
 
         assertThat(requestRepository.findById(approved.getId()))
                 .get()
@@ -138,7 +142,7 @@ class DonationServiceTest {
         DonationRequest pending = request(RequestStatus.PENDING);
 
         assertThatThrownBy(() ->
-                donationService.recordDonation(dto(LocalDate.now(), pending.getId()), donor))
+                donationService.recordDonation(dto(LocalDate.now(), pending.getId()), donor, admin))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(requestRepository.findById(pending.getId()))
@@ -154,9 +158,9 @@ class DonationServiceTest {
     @Test
     void aBackdatedDonationDoesNotDragTheLastDonationDateBackwards() {
         LocalDate recent = LocalDate.now().minusDays(2);
-        donationService.recordDonation(dto(recent, null), donor);
+        donationService.recordDonation(dto(recent, null), donor, admin);
 
-        donationService.recordDonation(dto(LocalDate.now().minusMonths(6), null), donor);
+        donationService.recordDonation(dto(LocalDate.now().minusMonths(6), null), donor, admin);
 
         assertThat(userRepository.findById(donor.getId()))
                 .get()
@@ -170,7 +174,7 @@ class DonationServiceTest {
         DonationRequest incompatible = request(RequestStatus.APPROVED, BloodGroup.O_NEGATIVE);
 
         assertThatThrownBy(() ->
-                donationService.recordDonation(dto(LocalDate.now(), incompatible.getId()), donor))
+                donationService.recordDonation(dto(LocalDate.now(), incompatible.getId()), donor, admin))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(requestRepository.findById(incompatible.getId()))
@@ -187,7 +191,7 @@ class DonationServiceTest {
     void aPartialDonationLeavesTheRequestApproved() {
         DonationRequest approved = request(RequestStatus.APPROVED, 5);
 
-        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 2), donor);
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 2), donor, admin);
 
         assertThat(requestRepository.findById(approved.getId()))
                 .get()
@@ -200,8 +204,8 @@ class DonationServiceTest {
     void theDonationThatCompletesARequestFulfilsIt() {
         DonationRequest approved = request(RequestStatus.APPROVED, 3);
 
-        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 2), donor);
-        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 1), donor);
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 2), donor, admin);
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 1), donor, admin);
 
         assertThat(requestRepository.findById(approved.getId()))
                 .get()
@@ -214,7 +218,7 @@ class DonationServiceTest {
     void collectingMoreThanNeededStillFulfilsTheRequest() {
         DonationRequest approved = request(RequestStatus.APPROVED, 2);
 
-        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 3), donor);
+        donationService.recordDonation(dto(LocalDate.now(), approved.getId(), 3), donor, admin);
 
         assertThat(requestRepository.findById(approved.getId()))
                 .get()
@@ -232,7 +236,7 @@ class DonationServiceTest {
         DonationRequest own = request(RequestStatus.APPROVED, BloodGroup.A_POSITIVE, 1, donor);
 
         assertThatThrownBy(() ->
-                donationService.recordDonation(dto(LocalDate.now(), own.getId()), donor))
+                donationService.recordDonation(dto(LocalDate.now(), own.getId()), donor, admin))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(requestRepository.findById(own.getId()))
@@ -248,7 +252,7 @@ class DonationServiceTest {
         DonationRequest approved = request(RequestStatus.APPROVED);
 
         assertThatThrownBy(() ->
-                donationService.recordDonation(dto(LocalDate.now(), approved.getId()), donor))
+                donationService.recordDonation(dto(LocalDate.now(), approved.getId()), donor, admin))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

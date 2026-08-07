@@ -131,12 +131,13 @@
                     <th>Units</th>
                     <th>Raised</th>
                     <th>Outcome</th>
+                    <th>Decided by</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${#lists.isEmpty(requestsDecided)}">
-                    <td class="empty-state" colspan="7">No requests were decided on this day.</td>
+                    <td class="empty-state" colspan="8">No requests were decided on this day.</td>
                 </tr>
                 <tr th:each="request : ${requestsDecided}">
                     <td th:text="${#temporals.format(request.decidedAt, 'HH:mm')}">15:20</td>
@@ -149,6 +150,10 @@
                         <span class="badge"
                               th:classappend="${'badge-' + #strings.toLowerCase(request.status.name())}"
                               th:text="${request.status}">APPROVED</span>
+                    </td>
+                    <!--/* Null on rows decided before the column existed - see DonationRequest. */-->
+                    <td th:text="${request.decidedBy != null ? request.decidedBy.fullName : 'Not recorded'}">
+                        LifeLine Administrator
                     </td>
                     <td>
                         <div class="inline-actions">

@@ -43,7 +43,7 @@ class UserServiceTest {
 
     @Test
     void deactivatingADonorWorks() {
-        User donor = save("donor@test.local", "Test Donor", Role.DONOR, true);
+        User donor = save("donor@test.local", "Test Donor", Role.USER, true);
 
         userService.deactivateUser(donor.getId());
 
@@ -72,8 +72,8 @@ class UserServiceTest {
 
     @Test
     void activeUserListingExcludesDeactivatedAccounts() {
-        save("active@test.local", "Active Donor", Role.DONOR, true);
-        save("inactive@test.local", "Inactive Donor", Role.DONOR, false);
+        save("active@test.local", "Active Donor", Role.USER, true);
+        save("inactive@test.local", "Inactive Donor", Role.USER, false);
 
         List<String> emails = userService
                 .getAllActiveUsers(PageRequest.of(0, 50, Sort.by("fullName")))
@@ -95,7 +95,7 @@ class UserServiceTest {
 
         assertThat(created.getPassword()).isNotEqualTo("Password123!");
         assertThat(passwordEncoder.matches("Password123!", created.getPassword())).isTrue();
-        assertThat(created.getRole()).isEqualTo(Role.DONOR);
+        assertThat(created.getRole()).isEqualTo(Role.USER);
         assertThat(created.isActive()).isTrue();
     }
 }

@@ -27,7 +27,7 @@ import java.util.List;
 // Fills an empty database with a working blood bank: an administrator, donors covering every blood
 // group, a request queue spanning every status, and roughly a year of donation history.
 //
-// This is not a convenience. Registration only creates DONOR accounts and nothing else makes an
+// This is not a convenience. Registration only creates USER accounts and nothing else makes an
 // administrator, so without this a fresh database cannot reach /dashboard or /admin/** at all.
 // Passwords are encoded here rather than written as SQL because BCrypt hashes have to be generated.
 //
@@ -181,7 +181,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 continue;
             }
 
-            User user = newUser(seed.email(), seed.name(), Role.DONOR, seed.active());
+            User user = newUser(seed.email(), seed.name(), Role.USER, seed.active());
             user.setBloodGroup(seed.group());
             user.setGender(seed.gender());
             user.setDateOfBirth(seed.born());
@@ -193,7 +193,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         // Left bare on purpose so the "Profile Incomplete" state on /donor/profile is reachable
         // without registering a throwaway account.
         if (!userRepository.existsByEmail("new.donor@example.com")) {
-            userRepository.save(newUser("new.donor@example.com", "Sam Rivera", Role.DONOR, true));
+            userRepository.save(newUser("new.donor@example.com", "Sam Rivera", Role.USER, true));
         }
     }
 
@@ -257,6 +257,9 @@ public class DatabaseSeeder implements CommandLineRunner {
             if (seed.status() != RequestStatus.PENDING) {
                 request.setDecidedAt(
                         LocalDateTime.now().minusDays(seed.decidedDaysAgo()).withHour(14));
+                // The seeded administrator is the only account that could have decided anything,
+                // so the audit trail names them rather than being left blank.
+                request.setDecidedBy(required(adminEmail));
             }
             request.setNotes(seed.notes());
             saved.add(requestRepository.save(request));

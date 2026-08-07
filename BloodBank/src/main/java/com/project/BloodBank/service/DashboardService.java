@@ -37,9 +37,12 @@ public class DashboardService {
 
     // --- Headline figures ---
 
+    // Active non-admin accounts. Named for what it counts rather than what it used to be called:
+    // this is registered members, not people who have actually given blood. Most of them have
+    // never donated, and someone who only ever raises requests is counted here too.
     @Transactional(readOnly = true)
-    public long getTotalActiveDonors() {
-        return userRepository.countByActiveTrueAndRole(Role.DONOR);
+    public long getRegisteredUsers() {
+        return userRepository.countByActiveTrueAndRole(Role.USER);
     }
 
     @Transactional(readOnly = true)

@@ -59,7 +59,7 @@ class AdminSortingTest {
     }
 
     @Test
-    @WithMockUser(roles = "DONOR")
+    @WithMockUser(roles = "USER")
     void adminPagesStayClosedToDonors() throws Exception {
         mockMvc.perform(get("/admin/donors")).andExpect(status().isForbidden());
     }

@@ -56,7 +56,8 @@ public interface DonationRequestRepository extends JpaRepository<DonationRequest
     @EntityGraph(attributePaths = "requestedBy")
     List<DonationRequest> findByRequestDateBetween(LocalDateTime start, LocalDateTime end, Sort sort);
 
-    @EntityGraph(attributePaths = "requestedBy")
+    // Both associations, because the decided table names the requester and the administrator.
+    @EntityGraph(attributePaths = {"requestedBy", "decidedBy"})
     List<DonationRequest> findByDecidedAtBetween(LocalDateTime start, LocalDateTime end, Sort sort);
 
     // --- Dashboard counts ---

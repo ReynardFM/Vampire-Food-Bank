@@ -87,48 +87,55 @@ public class DonationRequestService {
     }
 
     // --- Status changes ---
-    // Each of these records decidedAt as well as the status. That timestamp is what lets the
-    // dashboard report what was acted on today, which requestDate cannot answer.
+    // Each of these records who acted and when, alongside the status itself. The timestamp is what
+    // lets the dashboard report what was done today, which requestDate cannot answer; the name is
+    // what makes it an audit trail rather than a bare fact.
+    //
+    // The acting administrator is passed in rather than read from the security context here, so
+    // these stay callable from the seeder and the tests, where there is nobody signed in.
 
     // The PENDING guard is what makes approval final: a request that was already rejected, or
     // already approved by another administrator, cannot be quietly decided a second time.
     @Transactional
-    public DonationRequest approveRequest(Long id) {
+    public DonationRequest approveRequest(Long id, User decidedBy) {
         DonationRequest request = getRequestById(id);
 
         if (request.getStatus() != RequestStatus.PENDING) {
             throw new IllegalStateException("Only PENDING requests can be approved. Current status: " + request.getStatus());
         }
 
-        request.setStatus(RequestStatus.APPROVED);
-        request.setDecidedAt(LocalDateTime.now());
-        return donationRequestRepository.save(request);
+        return decide(request, RequestStatus.APPROVED, decidedBy);
     }
 
     @Transactional
-    public DonationRequest rejectRequest(Long id) {
+    public DonationRequest rejectRequest(Long id, User decidedBy) {
         DonationRequest request = getRequestById(id);
 
         if (request.getStatus() != RequestStatus.PENDING) {
             throw new IllegalStateException("Only PENDING requests can be rejected. Current status: " + request.getStatus());
         }
 
-        request.setStatus(RequestStatus.REJECTED);
-        request.setDecidedAt(LocalDateTime.now());
-        return donationRequestRepository.save(request);
+        return decide(request, RequestStatus.REJECTED, decidedBy);
     }
 
     // No status guard here, unlike the two above, because the caller has already made the check.
     // Only DonationService calls this, and only after confirming the request is APPROVED and the
     // blood is compatible.
+    //
+    // The name recorded is whoever entered the donation - fulfilment is not a decision somebody
+    // sits down to make, it is the side effect of recording blood arriving.
     @Transactional
-    public DonationRequest markAsFulfilled(Long id) {
+    public DonationRequest markAsFulfilled(Long id, User recordedBy) {
         DonationRequest request = getRequestById(id);
-        request.setStatus(RequestStatus.FULFILLED);
+        return decide(request, RequestStatus.FULFILLED, recordedBy);
+    }
 
-        // decidedAt tracks the last move away from PENDING, so fulfilment updates it too. Without
-        // this the dashboard could not tell what was fulfilled today.
+    // The one place a status moves off PENDING, so the timestamp and the name can never be set by
+    // one path and forgotten by another.
+    private DonationRequest decide(DonationRequest request, RequestStatus status, User actor) {
+        request.setStatus(status);
         request.setDecidedAt(LocalDateTime.now());
+        request.setDecidedBy(actor);
         return donationRequestRepository.save(request);
     }
 }

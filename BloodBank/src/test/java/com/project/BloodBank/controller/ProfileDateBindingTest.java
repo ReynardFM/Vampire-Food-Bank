@@ -65,7 +65,7 @@ class ProfileDateBindingTest {
         donor.setEmail(EMAIL);
         donor.setFullName("Date Tester");
         donor.setPassword(passwordEncoder.encode("Password123!"));
-        donor.setRole(Role.DONOR);
+        donor.setRole(Role.USER);
         donor.setActive(true);
         donor.setPhoneNumber("+1 416 555 0000");
         donor.setBloodGroup(BloodGroup.A_POSITIVE);

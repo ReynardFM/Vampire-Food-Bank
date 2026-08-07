@@ -36,8 +36,11 @@ public class DonationService {
 
     // Records a collected donation and closes out the request it was for.
     // @Transactional covers all three tables written below, so a failure part way leaves nothing.
+    // recordedBy is the administrator entering this, which is not the donor - donations are always
+    // logged on somebody's behalf. It is carried through so that a request closed by this donation
+    // records who closed it.
     @Transactional
-    public Donation recordDonation(DonationRecordDto dto, User donor) {
+    public Donation recordDonation(DonationRecordDto dto, User donor, User recordedBy) {
 
         // Copy the form values across. A DTO rather than the entity, so a crafted request cannot
         // set fields the form never offered.
@@ -75,7 +78,7 @@ public class DonationService {
         // Where the two halves of the app meet: recording a donation is the only thing that marks a
         // request FULFILLED - and only once enough blood has actually been collected for it.
         if (donation.getLinkedRequest() != null) {
-            closeIfFullyCollected(donation.getLinkedRequest());
+            closeIfFullyCollected(donation.getLinkedRequest(), recordedBy);
         }
 
         return savedDonation;
@@ -90,9 +93,9 @@ public class DonationService {
     //
     // The sum includes the donation just saved. Hibernate flushes pending writes before running a
     // query, so the row is already in the database by the time this counts it.
-    private void closeIfFullyCollected(DonationRequest request) {
+    private void closeIfFullyCollected(DonationRequest request, User recordedBy) {
         if (collectedFor(request.getId()) >= request.getUnitsNeeded()) {
-            donationRequestService.markAsFulfilled(request.getId());
+            donationRequestService.markAsFulfilled(request.getId(), recordedBy);
         }
     }
 

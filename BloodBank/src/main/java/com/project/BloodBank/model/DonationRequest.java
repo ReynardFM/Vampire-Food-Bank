@@ -83,6 +83,25 @@ public class DonationRequest {
     @Column
     private LocalDateTime decidedAt;
 
+    // Which administrator approved, rejected or fulfilled it. The other half of decidedAt: knowing
+    // a request was approved on Tuesday is of limited use without knowing who approved it.
+    //
+    // Null while pending, and null on rows decided before this column existed - the same situation
+    // decidedAt is in, and handled the same way: shown when known, left blank rather than guessed.
+    //
+    // RESTRICT rather than SET NULL, unlike the donation-to-request link. This is an audit trail,
+    // so losing the name would defeat the point of recording it; deleting a user who has decided
+    // something should fail. Nothing in the application deletes users anyway - they deactivate.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "decided_by_id",
+            foreignKey = @ForeignKey(
+                    name = "fk_donationrequest_decidedby",
+                    foreignKeyDefinition = "FOREIGN KEY (decided_by_id) REFERENCES users(id) ON DELETE RESTRICT"
+            )
+    )
+    private User decidedBy;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -223,6 +242,14 @@ public class DonationRequest {
 
     public void setDecidedAt(LocalDateTime decidedAt) {
         this.decidedAt = decidedAt;
+    }
+
+    public User getDecidedBy() {
+        return decidedBy;
+    }
+
+    public void setDecidedBy(User decidedBy) {
+        this.decidedBy = decidedBy;
     }
 
     public String getNotes() {

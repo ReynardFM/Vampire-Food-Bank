@@ -30,7 +30,7 @@ public class DashboardController {
 
     @GetMapping
     public String dashboard(Model model) {
-        model.addAttribute("totalDonors", dashboardService.getTotalActiveDonors());
+        model.addAttribute("registeredUsers", dashboardService.getRegisteredUsers());
         model.addAttribute("donationsThisMonth", dashboardService.getDonationsThisMonth());
         model.addAttribute("pendingRequests", dashboardService.getPendingRequestCount());
         model.addAttribute("requestsRaisedToday", dashboardService.getRequestsRaisedToday());

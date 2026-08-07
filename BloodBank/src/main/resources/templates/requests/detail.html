@@ -73,6 +73,21 @@
                 <dd th:text="${#temporals.format(request.requestDate, 'MMM d, yyyy · HH:mm')}">Jul 28, 2026 · 09:00</dd>
             </div>
 
+            <!--/*
+              The audit trail: when the request left the pending queue, and who moved it. Absent
+              while it is still pending, and absent on rows decided before these columns existed -
+              blank rather than guessed, the same treatment the daily reports give them.
+            */-->
+            <div class="detail-item" th:if="${request.decidedAt != null}">
+                <dt th:text="${request.status.name() == 'FULFILLED' ? 'Fulfilled' : 'Decided'}">Decided</dt>
+                <dd>
+                    <span th:text="${#temporals.format(request.decidedAt, 'MMM d, yyyy · HH:mm')}">Aug 1, 2026 · 14:00</span><br>
+                    <span class="field-hint" th:if="${request.decidedBy != null}"
+                          th:text="'by ' + ${request.decidedBy.fullName}">by LifeLine Administrator</span>
+                    <span class="field-hint" th:if="${request.decidedBy == null}">administrator not recorded</span>
+                </dd>
+            </div>
+
             <div class="detail-item wide">
                 <dt>Hospital</dt>
                 <dd>

@@ -48,7 +48,7 @@ public class UserService {
 
         // Role and active are set here rather than taken from the form. Letting the browser supply
         // either would mean anyone could register themselves an administrator.
-        user.setRole(Role.DONOR);
+        user.setRole(Role.USER);
         user.setActive(true);
 
         return userRepository.save(user);
@@ -84,7 +84,24 @@ public class UserService {
     // group. compatibleDonors() is what widens it - see BloodGroup.
     @Transactional(readOnly = true)
     public Page<User> searchCompatibleDonors(BloodGroup recipientGroup, Pageable pageable) {
-        return userRepository.findByBloodGroupInAndActiveTrue(recipientGroup.compatibleDonors(), pageable);
+        return searchCompatibleDonors(recipientGroup, null, pageable);
+    }
+
+    // As above, minus one person. Used when the search is being done to fulfil a particular
+    // request: whoever raised it cannot supply it, so listing them offers a donation that recording
+    // would refuse - and the recording form would quietly drop the request link rather than explain.
+    //
+    // A null exclusion means an ordinary search, where everybody compatible belongs in the results.
+    @Transactional(readOnly = true)
+    public Page<User> searchCompatibleDonors(BloodGroup recipientGroup, Long excludeUserId,
+                                             Pageable pageable) {
+        if (excludeUserId == null) {
+            return userRepository.findByBloodGroupInAndActiveTrue(
+                    recipientGroup.compatibleDonors(), pageable);
+        }
+
+        return userRepository.findByBloodGroupInAndActiveTrueAndIdNot(
+                recipientGroup.compatibleDonors(), excludeUserId, pageable);
     }
 
     // The signed-in user, freshly loaded rather than taken from the session.

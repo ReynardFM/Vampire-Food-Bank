@@ -58,7 +58,7 @@ class ReportServiceTest {
         donor.setEmail("report-donor@test.local");
         donor.setFullName("Report Donor");
         donor.setPassword(passwordEncoder.encode("Password123!"));
-        donor.setRole(Role.DONOR);
+        donor.setRole(Role.USER);
         donor.setActive(true);
         donor.setBloodGroup(BloodGroup.A_POSITIVE);
         donor = userRepository.save(donor);

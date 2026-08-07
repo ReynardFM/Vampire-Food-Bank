@@ -35,10 +35,14 @@
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
     <section class="stats-grid">
+        <!--/*
+          Registered members, not people who have donated. Most accounts have never given blood,
+          and somebody who only raises requests is counted here too - so "donors" would overstate it.
+        */-->
         <article class="stat-card">
             <i class="fa-solid fa-users"></i>
-            <strong th:text="${totalDonors}">0</strong>
-            <span>Active donors</span>
+            <strong th:text="${registeredUsers}">0</strong>
+            <span>Registered users</span>
         </article>
         <article class="stat-card">
             <i class="fa-solid fa-droplet"></i>

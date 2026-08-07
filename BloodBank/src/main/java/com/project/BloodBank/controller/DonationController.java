@@ -2,7 +2,9 @@ package com.project.BloodBank.controller;
 
 import com.project.BloodBank.dto.DonationRecordDto;
 import com.project.BloodBank.exception.ResourceNotFoundException;
+import com.project.BloodBank.model.DonationRequest;
 import com.project.BloodBank.model.User;
+import com.project.BloodBank.model.enums.RequestStatus;
 import com.project.BloodBank.service.DonationRequestService;
 import com.project.BloodBank.service.DonationService;
 import com.project.BloodBank.service.UserService;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.util.List;
 
 // Recording a donation, which is what ties the two halves of the application together: it fills in
 // the donor's history, feeds the dashboard totals and their last donation date, and closes out the
@@ -71,6 +74,16 @@ public class DonationController {
             model.addAttribute("donationDto", dto);
         }
 
+        // A preselection only holds if the dropdown actually offers that request. When it does not -
+        // most often because this donor is the person who raised it - the browser falls back to
+        // "Not linked", and the donation would be filed as an unrelated walk-in without a word.
+        // Saying so is the difference between a refusal and a silent wrong answer.
+        if (requestId != null && !offersRequest(model, requestId)) {
+            model.addAttribute("error",
+                    "This donor cannot fulfil request #" + requestId
+                            + ", so it is not selected below. Recording here files an unlinked donation.");
+        }
+
         return "donations/record";
     }
 
@@ -98,10 +111,9 @@ public class DonationController {
         }
 
         try {
-            donationService.recordDonation(dto, donor);
-            redirectAttributes.addFlashAttribute("success",
-                    "Donation recorded for " + donor.getFullName() + ".");
-            return "redirect:/admin/donors";
+            // The donor gives the blood; the signed-in administrator is the one entering it.
+            donationService.recordDonation(dto, donor, userService.getCurrentUser());
+            return afterRecording(dto, donor, redirectAttributes);
         } catch (IllegalStateException e) {
             // Raised by recordDonation for a request that is no longer approved, or one this donor's
             // blood cannot serve. The message says which, so it is shown rather than replaced.
@@ -117,6 +129,58 @@ public class DonationController {
             model.addAttribute("error", "Failed to record the donation. Please try again.");
             return "donations/record";
         }
+    }
+
+    // Where to go once a donation is saved, which depends on whether it finished the job.
+    //
+    // A donation that only partly fills its request leaves work outstanding, and landing on the
+    // account list at that point abandons it - the administrator has to find their way back to
+    // search and remember which request they were filling. Sending them straight to donor search
+    // with the request still in hand keeps the session going, exactly as approving one does.
+    //
+    // The request is re-read rather than taken from the saved donation. recordDonation runs in its
+    // own transaction, so by the time this executes the entity it returned is detached and its
+    // status is whatever it was before fulfilment was considered.
+    private String afterRecording(DonationRecordDto dto, User donor,
+                                  RedirectAttributes redirectAttributes) {
+
+        if (dto.getLinkedRequestId() == null) {
+            redirectAttributes.addFlashAttribute("success",
+                    "Donation recorded for " + donor.getFullName() + ".");
+            return "redirect:/admin/donors";
+        }
+
+        DonationRequest linked = requestService.getRequestById(dto.getLinkedRequestId());
+
+        // Still approved means it was not enough. Carry on collecting.
+        if (linked.getStatus() == RequestStatus.APPROVED) {
+            int outstanding = linked.getUnitsNeeded() - donationService.collectedFor(linked.getId());
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Recorded " + dto.getUnitsDonated() + " unit(s) from " + donor.getFullName()
+                            + ". Request #" + linked.getId() + " still needs " + outstanding + ".");
+            redirectAttributes.addAttribute("bloodGroup", linked.getRequestedBloodGroup());
+            redirectAttributes.addAttribute("requestId", linked.getId());
+            return "redirect:/donor/search";
+        }
+
+        redirectAttributes.addFlashAttribute("success",
+                "Donation recorded for " + donor.getFullName()
+                        + ". Request #" + linked.getId() + " is now fulfilled.");
+        return "redirect:/admin/donors";
+    }
+
+    // Whether the dropdown actually contains the request the URL asked to preselect. Read back off
+    // the model rather than re-queried, so it is exactly the list the page will render.
+    @SuppressWarnings("unchecked")
+    private boolean offersRequest(Model model, Long requestId) {
+        Object offered = model.getAttribute("approvedRequests");
+        if (!(offered instanceof List<?> requests)) {
+            return false;
+        }
+
+        return ((List<DonationRequest>) requests).stream()
+                .anyMatch(request -> requestId.equals(request.getId()));
     }
 
     // What the form needs besides the DTO itself. Extracted because every path that redisplays the

@@ -192,6 +192,12 @@ public class DonorController {
         // Searching on behalf of an approved request, which is what turns this page into a step in
         // a workflow rather than a lookup. Admin-only, and quietly ignored once the request is no
         // longer APPROVED, so an old link cannot reopen a job that is already finished.
+        // Whoever raised the request being fulfilled. They are excluded from the results below,
+        // because a request cannot be fulfilled by the person who raised it - listing them offers a
+        // donation that the recording step would refuse, and worse, the recording form would drop
+        // the request link without saying so and file the donation as an unrelated walk-in.
+        Long requesterToExclude = null;
+
         if (isAdmin && requestId != null) {
             try {
                 DonationRequest fulfilling = requestService.getRequestById(requestId);
@@ -201,6 +207,7 @@ public class DonorController {
                     // collect rather than repeating the original figure on every visit.
                     model.addAttribute("unitsOutstanding",
                             fulfilling.getUnitsNeeded() - donationService.collectedFor(fulfilling.getId()));
+                    requesterToExclude = fulfilling.getRequestedBy().getId();
                 }
             } catch (ResourceNotFoundException e) {
                 // Deleted since the link was made. Falling through to an ordinary search is kinder
@@ -221,8 +228,10 @@ public class DonorController {
         // between "everyone" and "everyone who can give to X".
         Page<User> results;
         if (bloodGroup != null) {
-            // Compatible donors, not exact matches - see BloodGroup.compatibleDonors().
-            results = userService.searchCompatibleDonors(bloodGroup, pageSupport.of(page, sorting.toSort()));
+            // Compatible donors, not exact matches - see BloodGroup.compatibleDonors(). The
+            // exclusion is null on an ordinary search, so everybody compatible is listed.
+            results = userService.searchCompatibleDonors(
+                    bloodGroup, requesterToExclude, pageSupport.of(page, sorting.toSort()));
             model.addAttribute("selectedBloodGroup", bloodGroup);
         } else {
             results = userService.getAllActiveUsers(pageSupport.of(page, sorting.toSort()));

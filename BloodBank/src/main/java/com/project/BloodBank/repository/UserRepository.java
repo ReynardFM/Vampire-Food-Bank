@@ -32,6 +32,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByBloodGroupAndActiveTrue(BloodGroup bloodGroup, Sort sort);
     Page<User> findByBloodGroupInAndActiveTrue(Collection<BloodGroup> bloodGroups, Pageable pageable);
 
+    // IdNot leaves one person out. Used when the search is fulfilling a particular request, to keep
+    // whoever raised it off the list of people who could supply it.
+    Page<User> findByBloodGroupInAndActiveTrueAndIdNot(
+            Collection<BloodGroup> bloodGroups, Long excludedId, Pageable pageable);
+
     // ActiveTrue appears on every one of these on purpose. Deactivating is a soft delete, so the
     // rows are still there, and a query that forgot this would quietly resurrect them.
     Page<User> findAllByActiveTrue(Pageable pageable);

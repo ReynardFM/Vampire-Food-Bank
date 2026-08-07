@@ -91,7 +91,8 @@ public class AdminController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            DonationRequest approved = requestService.approveRequest(id);
+            // The signed-in administrator is recorded against the decision.
+            DonationRequest approved = requestService.approveRequest(id, userService.getCurrentUser());
             BloodGroup needed = approved.getRequestedBloodGroup();
 
             // Approving is almost always followed by "so who can actually give?", so go straight
@@ -127,7 +128,7 @@ public class AdminController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            requestService.rejectRequest(id);
+            requestService.rejectRequest(id, userService.getCurrentUser());
             redirectAttributes.addFlashAttribute("success", "Request rejected.");
         } catch (IllegalStateException e) {
             redirectAttributes.addFlashAttribute("error", "Request is no longer pending.");

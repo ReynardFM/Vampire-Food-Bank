@@ -89,7 +89,7 @@ sorting.
 - **Deactivating an administrator is refused.** Nothing in the app can create or
   re-enable an admin, so this would be a one-way door out of the admin area
 - Deactivated accounts disappear from the account listing
-- Registration stores a BCrypt hash, not the plain password, and assigns `DONOR`
+- Registration stores a BCrypt hash, not the plain password, and assigns `USER`
 
 ### `DonationServiceTest` — 10 tests
 
