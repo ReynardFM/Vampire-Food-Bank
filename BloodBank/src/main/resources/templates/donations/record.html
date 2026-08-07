@@ -29,7 +29,19 @@
                 dashboard totals. Linking it to an approved request marks that request fulfilled.
             </p>
         </div>
-        <a class="btn-secondary" th:href="@{/admin/donors}"><i class="fa-solid fa-arrow-left"></i> Donors</a>
+        <!--/*
+          Back to wherever this was reached from. Arriving to fulfil a request means the search that
+          was filling it; arriving from the account list means the account list. Sending everyone to
+          the accounts page abandoned a job halfway through.
+        */-->
+        <a class="btn-secondary" th:if="${fulfillingRequest != null}"
+           th:href="@{/donor/search(bloodGroup=${fulfillingRequest.requestedBloodGroup},
+                     requestId=${fulfillingRequest.id}, from=${from})}">
+            <i class="fa-solid fa-arrow-left"></i> Back to donors for #<span th:text="${fulfillingRequest.id}">12</span>
+        </a>
+        <a class="btn-secondary" th:if="${fulfillingRequest == null}" th:href="@{/admin/donors}">
+            <i class="fa-solid fa-arrow-left"></i> Manage accounts
+        </a>
     </div>
 
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
@@ -75,12 +87,31 @@
                       incompatible one cannot be picked here. DonationService checks again anyway,
                       because the chosen id is posted from the browser and could be anything.
                     */-->
-                    <select id="linkedRequestId" th:field="*{linkedRequestId}">
+                    <!--/*
+                      Fixed when this form was opened to fulfil a particular request - that is the
+                      whole reason it was opened, and changing it here would quietly redirect the
+                      blood somewhere else. Left open when the donor picked the form off the account
+                      list, where choosing a request is the point.
+
+                      lockRequest is false even with a request in hand when the dropdown does not
+                      offer it, which happens when the donor raised it themselves. The choice has to
+                      stay open then, or there is no way to record the donation at all.
+
+                      A disabled control is not submitted, so the id goes in a hidden field with the
+                      same name. Without it the link would be dropped on save.
+                    */-->
+                    <input type="hidden" name="linkedRequestId"
+                           th:if="${lockRequest}" th:value="${fulfillingRequest.id}">
+                    <select id="linkedRequestId" th:field="*{linkedRequestId}"
+                            th:disabled="${lockRequest}">
                         <option value="">Not linked to a request</option>
                         <option th:each="req : ${approvedRequests}" th:value="${req.id}"
                                 th:text="'#' + ${req.id} + ' - ' + ${req.requestedBloodGroup.displayName}
                                          + ', ' + ${req.unitsNeeded} + ' unit(s) at ' + ${req.hospitalName}"></option>
                     </select>
+                    <span class="field-hint" th:if="${lockRequest}">
+                        Set by the request you are fulfilling. Cancel to choose a different donor.
+                    </span>
                     <span class="field-error" th:if="${#fields.hasErrors('linkedRequestId')}" th:errors="*{linkedRequestId}"></span>
                     <!--/*
                       An empty list has two quite different causes, so there are two messages.
@@ -100,9 +131,14 @@
                 </div>
             </div>
 
+            <!--/* Cancel goes wherever the back link goes - the same journey, abandoned. */-->
             <div class="inline-actions" style="margin-top: 24px;">
                 <button class="btn-primary" type="submit"><i class="fa-solid fa-droplet"></i> Record donation</button>
-                <a class="btn-secondary" th:href="@{/admin/donors}">Cancel</a>
+                <a class="btn-secondary" th:if="${fulfillingRequest != null}"
+                   th:href="@{/donor/search(bloodGroup=${fulfillingRequest.requestedBloodGroup},
+                             requestId=${fulfillingRequest.id}, from=${from})}">Cancel</a>
+                <a class="btn-secondary" th:if="${fulfillingRequest == null}"
+                   th:href="@{/admin/donors}">Cancel</a>
             </div>
         </form>
     </section>

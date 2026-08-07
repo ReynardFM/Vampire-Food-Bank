@@ -78,14 +78,34 @@ public class DonationController {
             model.addAttribute("donationDto", dto);
         }
 
-        // A preselection only holds if the dropdown actually offers that request. When it does not -
-        // most often because this donor is the person who raised it - the browser falls back to
-        // "Not linked", and the donation would be filed as an unrelated walk-in without a word.
-        // Saying so is the difference between a refusal and a silent wrong answer.
-        if (requestId != null && !offersRequest(model, requestId)) {
-            model.addAttribute("error",
-                    "This donor cannot fulfil request #" + requestId
-                            + ", so it is not selected below. Recording here files an unlinked donation.");
+        // Two separate questions about the request this form arrived with.
+        //
+        // fulfillingRequest is "which request sent me here", and drives where Cancel goes - back to
+        // the search that was filling it, rather than the account list nobody came from.
+        //
+        // lockRequest is "may this donor actually fulfil it", which is what decides whether the
+        // dropdown is fixed. They differ in one case that matters: the donor is the person who
+        // raised the request, so the dropdown does not offer it. Then the way back is still the
+        // search, but the choice has to stay open.
+        if (requestId != null) {
+            try {
+                model.addAttribute("fulfillingRequest", requestService.getRequestById(requestId));
+            } catch (ResourceNotFoundException e) {
+                // Removed since the link was made. Cancel falls back to the account list.
+            }
+
+            // A preselection only holds if the dropdown actually offers that request. When it does
+            // not, the browser falls back to "Not linked" and the donation would be filed as an
+            // unrelated walk-in without a word. Saying so is the difference between a refusal and a
+            // silent wrong answer.
+            boolean offered = offersRequest(model, requestId);
+            model.addAttribute("lockRequest", offered);
+
+            if (!offered) {
+                model.addAttribute("error",
+                        "This donor cannot fulfil request #" + requestId
+                                + ", so it is not selected below. Recording here files an unlinked donation.");
+            }
         }
 
         return "donations/record";
